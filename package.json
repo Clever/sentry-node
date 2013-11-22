@@ -1,0 +1,30 @@
+{
+  "name": "sentry-node",
+  "version": "0.1.0",
+  "description": "simple Node wrapper around Sentry API",
+  "engines": {
+    "node": ">=0.10.x"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make -Br test",
+    "test-cov": "make -Br test-cov",
+    "prepublish": "make build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Clever/sentry-node.git"
+  },
+  "keywords": [
+    "sentry",
+    "node"
+  ],
+  "author": "Clever <info@getclever.com> (http://getclever.com/)",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/Clever/sentry-node/issues"
+  }
+}
