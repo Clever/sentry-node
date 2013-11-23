@@ -1,12 +1,14 @@
 _               = require 'underscore'
 os              = require 'os'
 quest           = require 'quest'
-sentry_settings = require("#{__dirname}/credentials.coffee").sentry
 
 module.exports = class Sentry
 
   constructor: (settings) ->
-    _(@).defaults settings or {}, sentry_settings,
+    # check if settings includes key, secret and project_id
+    unless _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
+      throw new Error 'To use Sentry API, key, secret and project_id are required.'
+    _(@).defaults settings,
       hostname: os.hostname()
       enable_env: ['production']
     return
@@ -24,7 +26,7 @@ module.exports = class Sentry
 
     @_send data
 
-   message: (message, logger, extra) =>
+  message: (message, logger, extra) =>
      data =
        message: message
        logger: logger
@@ -33,7 +35,7 @@ module.exports = class Sentry
 
      @_send data
 
-   _send: (data) =>
+  _send: (data) =>
     unless process.env.NODE_ENV in @enable_env
       return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
 
