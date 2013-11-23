@@ -26,5 +26,14 @@
   "license": "BSD",
   "bugs": {
     "url": "https://github.com/Clever/sentry-node/issues"
+  },
+  "dependencies": {
+    "underscore": "~1.5.2",
+    "quest": "~0.2.4"
+  },
+  "devDependencies": {
+    "mocha": "~1.14.0",
+    "coffee-script": "~1.6.3",
+    "nock": "~0.23.0"
   }
 }
