@@ -56,7 +56,7 @@ describe 'sentry-node', ->
                   if _.every(['message','logger','level'], (prop) -> _.has(params, prop))
                     unless _.some(['culprit','server_name','platform','extra'], (prop) -> _.has(params, prop))
                       return 'message'
-                  throw Error 'Body of Sentry error request is incorrect.'
+                  throw Error 'Body of Sentry message request is incorrect.'
                 .post("/api/#{sentry_settings.project_id}/store/", 'message')
                 .reply(200, {"id": "c3115249083246efa839cfac2abbdefb"}) # mock sentry response with a random uuid
                 
