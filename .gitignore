@@ -1,5 +1,5 @@
 lib-js
-lib-cov
+lib-js-cov
 *.seed
 *.log
 *.csv
@@ -10,6 +10,7 @@ lib-cov
 .*.swp
 .DS_Store
 \#*\#
+*.html
 
 pids
 logs
