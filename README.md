@@ -18,13 +18,16 @@ $ npm test
 ##Usage
 
 ###register client
+
 ```coffeescript
 Sentry = require 'sentry-node'
 
+sentry = new Sentry # if you've set SENTRY_DSN in ENV
+or
+sentry = new Sentry {{ SENTRY_DSN }}
+or
 sentry = new Sentry({key: ..., secret: ..., project_id: ...})
 ```
-
-Or you can save credentials in a separate file and import it when necessary.
 
 ###error
 ```coffeescript

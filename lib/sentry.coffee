@@ -1,16 +1,29 @@
-_               = require 'underscore'
-os              = require 'os'
-quest           = require 'quest'
+_       = require 'underscore'
+os      = require 'os'
+nodeurl = require 'url'
+quest   = require 'quest'
 
 module.exports = class Sentry
 
   constructor: (settings) ->
-    # check if settings includes key, secret and project_id
-    unless _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
-      throw new Error 'To use Sentry API, key, secret and project_id are required.'
-    _(@).defaults settings,
-      hostname: os.hostname()
-      enable_env: ['production']
+    parsed = false
+    
+    if settings?
+      if typeof(settings) is 'string'
+        @_parseDSN settings
+        parsed = true
+      else if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
+        _(@).defaults settings
+        parsed = true
+    else if process.env.SENTRY_DSN?
+      @_parseDSN process.env.SENTRY_DSN
+      parsed = true
+      
+    if parsed
+      @hostname = os.hostname()
+      @enable_env = ['production']
+    else
+      throw new Error 'Sentry Authentications are required to use the HTTP API.'
     return
     
   error: (err, message, logger, extra) =>
@@ -34,6 +47,11 @@ module.exports = class Sentry
        extra: extra if extra?
 
      @_send data
+     
+  _parseDSN: (dsn) =>
+    parsed = nodeurl.parse(dsn)
+    @project_id = parsed.path.split('/')[1]
+    [@key, @secret] = parsed.auth.split ':'
 
   _send: (data) =>
     unless process.env.NODE_ENV in @enable_env
