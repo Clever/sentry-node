@@ -61,11 +61,10 @@ describe 'sentry-node', ->
                   throw Error 'Body of Sentry error request is incorrect.'
                 .post("/api/#{sentry_settings.project_id}/store/", 'error')
                 .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
-                
-    _this = @
-    assert.doesNotThrow ->
-      err = new Error 'Error message'
-      _this.sentry.error err, 'message', '/path/to/logger'
+             
+    assert.doesNotThrow =>
+      err = 
+      @sentry.error new Error('Error message'), 'message', '/path/to/logger'
       scope.done()
     done()
     
@@ -81,9 +80,8 @@ describe 'sentry-node', ->
                   throw Error 'Body of Sentry message request is incorrect.'
                 .post("/api/#{sentry_settings.project_id}/store/", 'message')
                 .reply(200, {"id": "c3115249083246efa839cfac2abbdefb"}) # mock sentry response with a random uuid
-                
-    _this = @
-    assert.doesNotThrow ->
-      _this.sentry.message 'message', '/path/to/logger'
+             
+    assert.doesNotThrow =>
+      @sentry.message 'message', '/path/to/logger'
       scope.done()
     done()
