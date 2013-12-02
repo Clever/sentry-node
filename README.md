@@ -1,6 +1,8 @@
 ## Sentry-node
 **Node v0.10 compatible**
 
+[![Build Status](https://travis-ci.org/Clever/sentry-node.png?branch=master)](https://travis-ci.org/Clever/sentry-node)
+
 A simple Node wrapper around [Sentry](http://getsentry.com/) API.
 
 
@@ -47,16 +49,16 @@ sentry.error(err, message, logger, extra);
 
 #### arguments
 
+```javascript
+sentry.error(new Error("The error method expected an Error instance as first argument."), "Bad arguments to sentry-node:error method", '/sentry-node.coffee', {note: "to test sentry-node error method", version: "0.1.0"});
+```
+
 ![image](http://i.imgur.com/xEHX8P3.png)
 
 * **err:** must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
 * **message:** `culprit`, big text that appears at the top
 * **logger:** the name of the logger which created the record, should be the error logger/handler in your code
 * **extra:** (optional) an object gives more context about the error in addition to `err.stack`
-
-```javascript
-sentry.error(err, "Unknown Error", 'apps/api', {note: "some random guess why this would happen...", version: "0.1.0"});
-```
 
 
 ### Message
@@ -66,12 +68,13 @@ sentry.message(message, logger, extra);
 
 #### arguments
 
+```javascript
+sentry.message("message", "/trial.coffee", {note: "to test sentry-node api", type: "message"});
+```
+
 ![image](http://i.imgur.com/kUMkhX2.png)
 
 * **message:** text will be used for both the big text appears at the top and the smaller text appears right under it
 * **logger:** the name of the logger which created the record
 * **extra:** (optional) an object gives more context about the message
-
-```javascript
-sentry.message("Completed job: <description you choose>", "apps/worker");
-```
+ 
