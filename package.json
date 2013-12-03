@@ -22,7 +22,6 @@
     "sentry",
     "node"
   ],
-  "author": "Clever <info@getclever.com> (http://getclever.com/)",
   "license": "BSD",
   "bugs": {
     "url": "https://github.com/Clever/sentry-node/issues"
