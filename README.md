@@ -47,13 +47,23 @@ var sentry = new Sentry({
 sentry.error(err, message, logger, extra);
 ```
 
-#### arguments
+#### sample
 
 ```javascript
-sentry.error(new Error("The error method expected an Error instance as first argument."), "Bad arguments to sentry-node:error method", '/sentry-node.coffee', {note: "to test sentry-node error method", version: "0.1.0"});
+sentry.error(
+  new Error("The error method expected an Error instance as first argument."),
+  "Bad arguments to sentry-node:error method",
+  '/sentry-node.coffee',
+  {
+    note: "to test sentry-node error method", 
+    version: "0.1.0"
+  }
+);
 ```
 
 ![image](http://i.imgur.com/xEHX8P3.png)
+
+#### arguments
 
 * **err:** must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
 * **message:** `culprit`, big text that appears at the top
@@ -66,13 +76,22 @@ sentry.error(new Error("The error method expected an Error instance as first arg
 sentry.message(message, logger, extra);
 ```
 
-#### arguments
+#### sample
 
 ```javascript
-sentry.message("message", "/trial.coffee", {note: "to test sentry-node api", type: "message"});
+sentry.message(
+  "message",
+  "/trial.coffee",
+  {
+    note: "to test sentry-node api",
+    type: "message"
+  }
+);
 ```
 
 ![image](http://i.imgur.com/kUMkhX2.png)
+
+#### arguments
 
 * **message:** text will be used for both the big text appears at the top and the smaller text appears right under it
 * **logger:** the name of the logger which created the record
