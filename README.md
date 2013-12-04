@@ -41,6 +41,11 @@ var sentry = new Sentry({
 });
 ```
 
+**Note:**
+
+- If `SENTRY_DSN` is not set or argument to `Sentry` is invalid, client will be disabled.
+- Argument to `Sentry` will update client settings even if `SENTRY_DSN` is set.
+
 
 ### Error
 ```javascript

@@ -6,24 +6,27 @@ quest   = require 'quest'
 module.exports = class Sentry
 
   constructor: (settings) ->
-    parsed = false
+    # first check if sentry dsn is set as environment variable
+    @_parseDSN(process.env.SENTRY_DSN or "")
     
+    # credentials are updated if explicitly passed in
     if settings?
-      if typeof(settings) is 'string'
+      if _(settings).isString()
         @_parseDSN settings
-        parsed = true
-      else if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
+      else if _(settings).isObject()
         _(@).defaults settings
-        parsed = true
-    else if process.env.SENTRY_DSN?
-      @_parseDSN process.env.SENTRY_DSN
-      parsed = true
+        if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
+          @enabled = true
+        else
+          @enabled = false
+          @disable_message = "Credentials you passed in aren't complete."
+      else
+        @enabled = false
+        @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
       
-    if parsed
-      @hostname = os.hostname()
-      @enable_env = ['production']
-    else
-      throw new Error 'Sentry Authentications are required to use the HTTP API.'
+    _(@).defaults
+      hostname: os.hostname()
+      enable_env: ['production']
     return
     
   error: (err, message, logger, extra) =>
@@ -40,13 +43,13 @@ module.exports = class Sentry
     @_send data
 
   message: (message, logger, extra) =>
-     data =
-       message: message
-       logger: logger
-       level: 'info'
-       extra: extra if extra?
+    data =
+      message: message
+      logger: logger
+      level: 'info'
+      extra: extra if extra?
 
-     @_send data
+    @_send data
      
   _parseDSN: (dsn) =>
     if dsn
@@ -54,15 +57,16 @@ module.exports = class Sentry
       try
         @project_id = parsed.path.split('/')[1]
         [@key, @secret] = parsed.auth.split ':'
+        @enabled = true
       catch err
-        @disabled = true
+        @enabled = false
         @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
     else
-      @disabled = true
-      @disable_message = "You passed in empty SENTRY_DSN. Sentry client is disabled."
+      @enabled = false
+      @disable_message = "You SENTRY_DSN is missing or empty. Sentry client is disabled."
 
   _send: (data) =>
-    if @disabled? and @disabled
+    unless @enabled
       return console.log @disable_message
       
     unless process.env.NODE_ENV in @enable_env
