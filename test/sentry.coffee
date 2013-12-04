@@ -80,7 +80,7 @@ describe 'sentry-node', ->
   it 'send error correctly', (done) ->
     scope = nock('https://app.getsentry.com')
                 .matchHeader('X-Sentry-Auth'
-                , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node/0.1.0")
+                , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node/0.1.2")
                 .filteringRequestBody (path) ->
                   params = JSON.parse path
                   if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
@@ -99,7 +99,7 @@ describe 'sentry-node', ->
   it 'send message correctly', (done) ->
     scope = nock('https://app.getsentry.com')
                 .matchHeader('X-Sentry-Auth'
-                , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node/0.1.0")
+                , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node/0.1.2")
                 .filteringRequestBody (path) ->
                   params = JSON.parse path
                   if _.every(['message','logger','level'], (prop) -> _.has(params, prop))
