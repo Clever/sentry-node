@@ -19,12 +19,13 @@ describe 'sentry-node', ->
     dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
     
     process.env.SENTRY_DSN = dsn
-    _sentry = new Sentry
+    _sentry = new Sentry()
     assert.equal _sentry.key, 'c28500314a0f4cf28b6d658c3dd37ddb'
     assert.equal _sentry.secret, 'a5d3fcd72b70494b877a1c2deba6ad74'
     assert.equal _sentry.project_id, '16088'
     assert.equal os.hostname(), _sentry.hostname
     assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.enabled, true
     
     delete process.env.SENTRY_DSN
     _sentry = new Sentry dsn
@@ -33,6 +34,7 @@ describe 'sentry-node', ->
     assert.equal _sentry.project_id, '16088'
     assert.equal os.hostname(), _sentry.hostname
     assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.enabled, true
     
     done()
     
@@ -42,23 +44,37 @@ describe 'sentry-node', ->
     assert.equal sentry_settings.project_id, @sentry.project_id
     assert.equal os.hostname(), @sentry.hostname
     assert.deepEqual ['production'], @sentry.enable_env
+    assert.equal @sentry.enabled, true
     done()
     
-  it 'report error if credentials are missing', (done) ->
-    assert.throws (-> new Sentry {}), Error
-    assert.throws (-> new Sentry), Error
+  it 'setup sentry client settings from settings passed in correctly', (done) ->
+    _sentry = new Sentry { enable_env: ['production', 'staging'] }
+    assert.deepEqual _sentry.enable_env, ['production', 'staging']
     done()
     
-  it 'empty DSN should disable the client', (done) ->
+  it 'empty or missing DSN should disable the client', (done) ->
     _sentry = new Sentry ""
-    assert.equal _sentry.disabled, true
-    assert.equal _sentry.disable_message, "You passed in empty SENTRY_DSN. Sentry client is disabled."
+    assert.equal _sentry.enabled, false
+    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+    
+    _sentry = new Sentry()
+    assert.equal _sentry.enabled, false
+    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
     done()
     
   it 'invalid DSN should disable the client', (done) ->
     _sentry = new Sentry "https://app.getsentry.com/16088"
-    assert.equal _sentry.disabled, true
+    assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
+    done()
+    
+  it 'passed in settings should update credentials of sentry client', (done) ->
+    dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
+    process.env.SENTRY_DSN = dsn
+    _sentry = new Sentry(sentry_settings)
+    assert.equal sentry_settings.key, @sentry.key
+    assert.equal sentry_settings.secret, @sentry.secret
+    assert.equal sentry_settings.project_id, @sentry.project_id
     done()
     
   it 'send error correctly', (done) ->
