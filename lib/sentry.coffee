@@ -49,11 +49,22 @@ module.exports = class Sentry
      @_send data
      
   _parseDSN: (dsn) =>
-    parsed = nodeurl.parse(dsn)
-    @project_id = parsed.path.split('/')[1]
-    [@key, @secret] = parsed.auth.split ':'
+    if dsn
+      parsed = nodeurl.parse(dsn)
+      try
+        @project_id = parsed.path.split('/')[1]
+        [@key, @secret] = parsed.auth.split ':'
+      catch err
+        @disabled = true
+        @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
+    else
+      @disabled = true
+      @disable_message = "You passed in empty SENTRY_DSN. Sentry client is disabled."
 
   _send: (data) =>
+    if @disabled? and @disabled
+      return console.log @disable_message
+      
     unless process.env.NODE_ENV in @enable_env
       return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
 
