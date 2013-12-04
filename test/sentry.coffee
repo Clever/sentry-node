@@ -49,6 +49,18 @@ describe 'sentry-node', ->
     assert.throws (-> new Sentry), Error
     done()
     
+  it 'empty DSN should disable the client', (done) ->
+    _sentry = new Sentry ""
+    assert.equal _sentry.disabled, true
+    assert.equal _sentry.disable_message, "You passed in empty SENTRY_DSN. Sentry client is disabled."
+    done()
+    
+  it 'invalid DSN should disable the client', (done) ->
+    _sentry = new Sentry "https://app.getsentry.com/16088"
+    assert.equal _sentry.disabled, true
+    assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
+    done()
+    
   it 'send error correctly', (done) ->
     scope = nock('https://app.getsentry.com')
                 .matchHeader('X-Sentry-Auth'
