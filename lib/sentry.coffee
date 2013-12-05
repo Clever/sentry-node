@@ -14,7 +14,7 @@ module.exports = class Sentry
       if _(settings).isString()
         @_parseDSN settings
       else if _(settings).isObject()
-        _(@).defaults settings
+        _(@).extend settings
         if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
           @enabled = true
         else
