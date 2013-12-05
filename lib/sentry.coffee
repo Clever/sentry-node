@@ -2,8 +2,10 @@ _       = require 'underscore'
 os      = require 'os'
 nodeurl = require 'url'
 quest   = require 'quest'
+util    = require 'util'
+events  = require 'events'
 
-module.exports = class Sentry
+module.exports = class Sentry extends events.EventEmitter
 
   constructor: (settings) ->
     # first check if sentry dsn is set as environment variable
@@ -78,6 +80,9 @@ module.exports = class Sentry
       headers:
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node/0.1.2"
       json: data
-    quest options, (err, res, body) ->
+    quest options, (err, res, body) =>
       if err? or res.statusCode > 299
         console.error 'Error posting event to Sentry:', err, body
+        @emit("error", err)
+      else
+        @emit("logged")
