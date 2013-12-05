@@ -78,7 +78,7 @@ module.exports = class Sentry extends events.EventEmitter
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
       method: 'post'
       headers:
-        'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node/0.1.2"
+        'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node/0.1.3"
       json: data
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
