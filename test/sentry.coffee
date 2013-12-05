@@ -72,9 +72,9 @@ describe 'sentry-node', ->
     dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
     process.env.SENTRY_DSN = dsn
     _sentry = new Sentry(sentry_settings)
-    assert.equal sentry_settings.key, @sentry.key
-    assert.equal sentry_settings.secret, @sentry.secret
-    assert.equal sentry_settings.project_id, @sentry.project_id
+    assert.equal sentry_settings.key, _sentry.key
+    assert.equal sentry_settings.secret, _sentry.secret
+    assert.equal sentry_settings.project_id, _sentry.project_id
     done()
     
   it 'send error correctly', (done) ->
