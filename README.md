@@ -101,4 +101,19 @@ sentry.message(
 * **message:** text will be used for both the big text appears at the top and the smaller text appears right under it
 * **logger:** the name of the logger which created the record
 * **extra:** (optional) an object gives more context about the message
- 
+
+
+## Events
+
+Sentry Client emits two events, `logged` and `error` that you can listen to.
+
+```javascript
+client.on('logged', function(){
+  console.log('Yay, it worked!');
+});
+client.on('error', function(e){
+  console.log('oh well, Sentry is broke.');
+  console.log(e);
+})
+client.message('Boom', 'logger');
+```
