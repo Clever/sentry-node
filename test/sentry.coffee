@@ -77,6 +77,9 @@ describe 'sentry-node', ->
     assert.equal sentry_settings.project_id, _sentry.project_id
     done()
     
+  it 'fails if passed an error that isnt an instance of Error', ->
+    assert.throws (=> @sentry.error 'not an Error'), /error must be an instance of Error/
+
   it 'send error correctly', (done) ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
