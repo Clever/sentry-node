@@ -115,3 +115,12 @@ sentry.on('error', function(e){
   console.log('oh well, Sentry is broke.');
   console.log(e);
 })
+```
+
+## Best Practices
+
+The Sentry client expects an instance of `Error` - it will throw an exception if not given one. This behavior is intended to align with the node.js best practice of always using `Error` instances. This means you should always take care to construct an `Error` object with an appropriate message before logging it to Sentry (really, you should always be using `Error` objects to represent error data throughout your codebase).
+
+You should always give as much context as possible with your errors. Make liberal use of the `extra` parameter to send more information that may help someone (most likely your future self) diagnose the cause of the error.
+
+If you attach other fields with important data to the `Error` instance, they will not show up in Sentry automatically. You should make sure to include those fields on the `extra` object.
