@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "underscore": "~1.5.2",
-    "quest": "~0.2.4"
+    "quest": "~0.2.4",
+    "debug": "~0.7.4"
   },
   "devDependencies": {
     "mocha": "~1.14.0",
