@@ -14,7 +14,7 @@ describe 'sentry-node', ->
     # because only in production env sentry api would make http request
     process.env.NODE_ENV = 'production'
     
-  it 'setup sentry client from SENTRY_DSN correctly', (done) ->
+  it 'setup sentry client from SENTRY_DSN correctly', ->
     # mock sentry dsn with random uuid as public_key and secret_key
     dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
     
@@ -36,23 +36,19 @@ describe 'sentry-node', ->
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
     
-    done()
-    
-  it 'setup sentry client from credentials correctly', (done) ->
+  it 'setup sentry client from credentials correctly', ->
     assert.equal sentry_settings.key, @sentry.key
     assert.equal sentry_settings.secret, @sentry.secret
     assert.equal sentry_settings.project_id, @sentry.project_id
     assert.equal os.hostname(), @sentry.hostname
     assert.deepEqual ['production'], @sentry.enable_env
     assert.equal @sentry.enabled, true
-    done()
     
-  it 'setup sentry client settings from settings passed in correctly', (done) ->
+  it 'setup sentry client settings from settings passed in correctly', ->
     _sentry = new Sentry { enable_env: ['production', 'staging'] }
     assert.deepEqual _sentry.enable_env, ['production', 'staging']
-    done()
     
-  it 'empty or missing DSN should disable the client', (done) ->
+  it 'empty or missing DSN should disable the client', ->
     _sentry = new Sentry ""
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
@@ -60,24 +56,21 @@ describe 'sentry-node', ->
     _sentry = new Sentry()
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
-    done()
     
-  it 'invalid DSN should disable the client', (done) ->
+  it 'invalid DSN should disable the client', ->
     _sentry = new Sentry "https://app.getsentry.com/16088"
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-    done()
     
-  it 'passed in settings should update credentials of sentry client', (done) ->
+  it 'passed in settings should update credentials of sentry client', ->
     dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
     process.env.SENTRY_DSN = dsn
     _sentry = new Sentry(sentry_settings)
     assert.equal sentry_settings.key, _sentry.key
     assert.equal sentry_settings.secret, _sentry.secret
     assert.equal sentry_settings.project_id, _sentry.project_id
-    done()
     
-  it 'warns if passed an error that isnt an instance of Error', (done) ->
+  it 'warns if passed an error that isnt an instance of Error', ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
@@ -90,12 +83,10 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    assert.doesNotThrow =>
-      @sentry.error 'not an Error', 'message', 'path/to/logger'
+    @sentry.error 'not an Error', 'message', 'path/to/logger'
     scope.done()
-    done()
 
-  it 'send error correctly', (done) ->
+  it 'send error correctly', ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
@@ -108,13 +99,10 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
              
-    assert.doesNotThrow =>
-      err = 
-      @sentry.error new Error('Error message'), 'message', '/path/to/logger'
-      scope.done()
-    done()
+    @sentry.error new Error('Error message'), 'message', '/path/to/logger'
+    scope.done()
     
-  it 'send message correctly', (done) ->
+  it 'send message correctly', ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
@@ -127,10 +115,8 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'message')
       .reply(200, {"id": "c3115249083246efa839cfac2abbdefb"}) # mock sentry response with a random uuid
              
-    assert.doesNotThrow =>
-      @sentry.message 'message', '/path/to/logger'
-      scope.done()
-    done()
+    @sentry.message 'message', '/path/to/logger'
+    scope.done()
     
   it 'emit logged event when successfully made an api call', (done) ->
     scope = nock('https://app.getsentry.com')
