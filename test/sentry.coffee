@@ -92,7 +92,7 @@ describe 'sentry-node', ->
 
     assert.doesNotThrow =>
       @sentry.error 'not an Error', 'message', 'path/to/logger'
-      scope.done()
+    scope.done()
     done()
 
   it 'send error correctly', (done) ->

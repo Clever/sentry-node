@@ -4,7 +4,6 @@ nodeurl = require 'url'
 quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
-debug   = require('debug') 'node-sentry'
 
 module.exports = class Sentry extends events.EventEmitter
 
@@ -34,7 +33,7 @@ module.exports = class Sentry extends events.EventEmitter
     
   error: (err, message, logger, extra) =>
     unless err instanceof Error
-      debug 'error must be an instance of Error', err
+      console.error 'error must be an instance of Error', err
       err = new Error 'CONVERT_TO_ERROR:' + JSON.stringify(err, null, 2)
     data =
       culprit: message # big text that appears at the top
