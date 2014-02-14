@@ -77,7 +77,7 @@ describe 'sentry-node', ->
     assert.equal sentry_settings.project_id, _sentry.project_id
     done()
     
-  it 'warns if passed an error that isnt an instance of Error', ->
+  it 'warns if passed an error that isnt an instance of Error', (done) ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
@@ -92,6 +92,8 @@ describe 'sentry-node', ->
 
     assert.doesNotThrow =>
       @sentry.error 'not an Error', 'message', 'path/to/logger'
+      scope.done()
+    done()
 
   it 'send error correctly', (done) ->
     scope = nock('https://app.getsentry.com')
