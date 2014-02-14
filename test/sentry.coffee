@@ -77,8 +77,21 @@ describe 'sentry-node', ->
     assert.equal sentry_settings.project_id, _sentry.project_id
     done()
     
-  it 'fails if passed an error that isnt an instance of Error', ->
-    assert.throws (=> @sentry.error 'not an Error'), /error must be an instance of Error/
+  it 'warns if passed an error that isnt an instance of Error', ->
+    scope = nock('https://app.getsentry.com')
+      .matchHeader('X-Sentry-Auth'
+      , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .filteringRequestBody (path) ->
+        params = JSON.parse path
+        if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
+          if params.extra?.stacktrace? and params.message.indexOf('CONVERT_TO_ERROR:') != -1
+            return 'error'
+        throw Error 'Body of Sentry error request is incorrect.'
+      .post("/api/#{sentry_settings.project_id}/store/", 'error')
+      .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
+
+    assert.doesNotThrow =>
+      @sentry.error 'not an Error', 'message', 'path/to/logger'
 
   it 'send error correctly', (done) ->
     scope = nock('https://app.getsentry.com')
