@@ -32,7 +32,9 @@ module.exports = class Sentry extends events.EventEmitter
     return
     
   error: (err, message, logger, extra) =>
-    throw new Error 'error must be an instance of Error' unless err instanceof Error
+    unless err instanceof Error
+      console.error 'error must be an instance of Error', err
+      err = new Error 'CONVERT_TO_ERROR:' + JSON.stringify(err, null, 2)
     data =
       culprit: message # big text that appears at the top
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
