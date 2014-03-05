@@ -124,3 +124,8 @@ The Sentry client expects an instance of `Error` - it will throw an exception if
 You should always give as much context as possible with your errors. Make liberal use of the `extra` parameter to send more information that may help someone (most likely your future self) diagnose the cause of the error.
 
 If you attach other fields with important data to the `Error` instance, they will not show up in Sentry automatically. You should make sure to include those fields on the `extra` object.
+
+Sentry asks for three main fields:
+* `culprit`: who threw the exception? Commonly the name of the service.
+* `message`: what was the exception? Always the message from the passed in error.
+* `logger`: what piece of code generated the message to Sentry? Usually just whatever application actually holds the Sentry client.
