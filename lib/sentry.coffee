@@ -82,7 +82,7 @@ module.exports = class Sentry extends events.EventEmitter
     # is nonexistant. #dealwithit
     if data.logger?
       unless _(data.logger).isString()
-        return console.log "Logger just be a string, was #{JSON.stringify data.logger}"
+        return console.log "Logger must be a string, was #{JSON.stringify data.logger}"
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
