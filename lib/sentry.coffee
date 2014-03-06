@@ -10,7 +10,7 @@ module.exports = class Sentry extends events.EventEmitter
   constructor: (settings) ->
     # first check if sentry dsn is set as environment variable
     @_parseDSN(process.env.SENTRY_DSN or "")
-    
+
     # credentials are updated if explicitly passed in
     if settings?
       if _(settings).isString()
@@ -25,12 +25,12 @@ module.exports = class Sentry extends events.EventEmitter
       else
         @enabled = false
         @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
-      
+
     _(@).defaults
       hostname: os.hostname()
       enable_env: ['production']
     return
-    
+
   error: (err, message, logger, extra) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
@@ -55,7 +55,7 @@ module.exports = class Sentry extends events.EventEmitter
       extra: extra if extra?
 
     @_send data
-     
+
   _parseDSN: (dsn) =>
     if dsn
       parsed = nodeurl.parse(dsn)
@@ -73,9 +73,15 @@ module.exports = class Sentry extends events.EventEmitter
   _send: (data) =>
     unless @enabled
       return console.log @disable_message
-      
+
     unless process.env.NODE_ENV in @enable_env
       return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
+
+    # If you send data.logger and it's not a string, Sentry tells you that it succeeded and sends
+    # you an event ID, Sentry doesn't actually do anything and the event ID that they give you
+    # is nonexistent. #dealwithit
+    if data.logger? and not _(data.logger).isString()
+      return @emit 'error', new Error "logger must be a string, was #{JSON.stringify data.logger}"
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
