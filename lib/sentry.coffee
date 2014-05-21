@@ -72,8 +72,13 @@ module.exports = class Sentry extends events.EventEmitter
     # If you send data.logger and it's not a string, Sentry tells you that it succeeded and sends
     # you an event ID, Sentry doesn't actually do anything and the event ID that they give you
     # is nonexistent. #dealwithit
+    # why not stringify it?
     if data.logger? and not _(data.logger).isString()
-      return @emit 'error', new Error "logger must be a string, was #{JSON.stringify data.logger}"
+      # return @emit 'error', new Error "Would have sent to sentry but logger must be a string, was #{JSON.stringify data.logger}"
+      data.logger = JSON.stringify data.logger + "\nlogger should be a string. It was #{typeof data.logger}"
+      @emit 'error', new Error "Logger should be a string" # is this needed -> find out what emit does. could console.error ?
+
+
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
