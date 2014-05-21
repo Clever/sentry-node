@@ -7,15 +7,15 @@ events  = require 'events'
 
 module.exports = class Sentry extends events.EventEmitter
 
+  # If settings are passed in they take precedence over the env var SENTRY_DSN
   constructor: (settings) ->
-    # first check if sentry dsn is set as environment variable
-    @_parseDSN(process.env.SENTRY_DSN or "")
-
-    # credentials are updated if explicitly passed in
-    if settings?
-      if _(settings).isString()
+    if not process.env.SENTRY_DSN? and not settings?
+      @enabled = false
+      @disable_message = "Your SENTRY_DSN is missing or empty. Sentry client is disabled."
+    else if settings?
+      if _.isString settings
         @_parseDSN settings
-      else if _(settings).isObject()
+      else if _.isObject settings
         _(@).extend settings
         if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
           @enabled = true
@@ -25,6 +25,8 @@ module.exports = class Sentry extends events.EventEmitter
       else
         @enabled = false
         @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
+    else
+      @_parseDSN(process.env.SENTRY_DSN)
 
     _(@).defaults
       hostname: os.hostname()
@@ -56,19 +58,6 @@ module.exports = class Sentry extends events.EventEmitter
 
     @_send data
 
-  _parseDSN: (dsn) =>
-    if dsn
-      parsed = nodeurl.parse(dsn)
-      try
-        @project_id = parsed.path.split('/')[1]
-        [@key, @secret] = parsed.auth.split ':'
-        @enabled = true
-      catch err
-        @enabled = false
-        @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-    else
-      @enabled = false
-      @disable_message = "You SENTRY_DSN is missing or empty. Sentry client is disabled."
 
   _send: (data) =>
     unless @enabled
@@ -81,7 +70,7 @@ module.exports = class Sentry extends events.EventEmitter
     # you an event ID, Sentry doesn't actually do anything and the event ID that they give you
     # is nonexistent. #dealwithit
     if data.logger? and not _(data.logger).isString()
-      return @emit 'error', new Error "logger must be a string, was #{JSON.stringify data.logger}"
+      return @emit 'error', new Error "Would have sent to sentry but logger must be a string, was #{JSON.stringify data.logger}"
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
@@ -95,3 +84,15 @@ module.exports = class Sentry extends events.EventEmitter
         @emit("error", err)
       else
         @emit("logged")
+
+
+  # we have already checked that dsn exists
+  _parseDSN: (dsn) =>
+    parsed = nodeurl.parse(dsn)
+    try
+      @project_id = parsed.path.split('/')[1]
+      [@key, @secret] = parsed.auth.split ':'
+      @enabled = true
+    catch err
+      @enabled = false
+      @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
