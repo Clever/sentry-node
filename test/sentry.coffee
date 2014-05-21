@@ -168,9 +168,9 @@ describe 'sentry-node', ->
 
     _sentry.message "hey!", "/"
 
-  it 'emits an error if you pass it a non-string logger', (done) ->
+  it 'converts the logger to a string if you pass it a non string logger', (done) ->
     logger = key: '/path/to/logger'
-    @sentry.once 'error', (err) ->
-      assert.equal err.message, "Would have sent to sentry but logger must be a string, was #{JSON.stringify logger}"
+    @sentry.once 'note', (err) ->
+      assert.equal err.message, "#{JSON.stringify logger}\nNB: logger was converted to a string."
       done()
     @sentry.error new Error('Error message'), 'message', logger

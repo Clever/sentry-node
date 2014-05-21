@@ -31,7 +31,6 @@ module.exports = class Sentry extends events.EventEmitter
     _(@).defaults
       hostname: os.hostname()
       enable_env: ['production']
-    return
 
   error: (err, message, logger, extra) =>
     unless err instanceof Error
@@ -66,11 +65,10 @@ module.exports = class Sentry extends events.EventEmitter
     unless process.env.NODE_ENV in @enable_env
       return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
 
-    # If you send data.logger and it's not a string, Sentry tells you that it succeeded and sends
-    # you an event ID, Sentry doesn't actually do anything and the event ID that they give you
-    # is nonexistent. #dealwithit
+    # data.logger must be a string else sentry fails quietly
     if data.logger? and not _(data.logger).isString()
-      return @emit 'error', new Error "Would have sent to sentry but logger must be a string, was #{JSON.stringify data.logger}"
+      data.logger = "#{JSON.stringify data.logger}\nNB: logger was converted to a string."
+      @emit 'note', new Error data.logger
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
