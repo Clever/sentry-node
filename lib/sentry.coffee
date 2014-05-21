@@ -51,6 +51,7 @@ module.exports = class Sentry extends events.EventEmitter
 
     @_send data
 
+  # Same as error but a message
   message: (message, logger, extra) =>
     data =
       message: message
@@ -60,19 +61,6 @@ module.exports = class Sentry extends events.EventEmitter
 
     @_send data
 
-  _parseDSN: (dsn) =>
-    if dsn
-      parsed = nodeurl.parse(dsn)
-      try
-        @project_id = parsed.path.split('/')[1]
-        [@key, @secret] = parsed.auth.split ':'
-        @enabled = true
-      catch err
-        @enabled = false
-        @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-    else
-      @enabled = false
-      @disable_message = "You SENTRY_DSN is missing or empty. Sentry client is disabled."
 
   _send: (data) =>
     unless @enabled
@@ -93,9 +81,22 @@ module.exports = class Sentry extends events.EventEmitter
       headers:
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node"
       json: data
+    # quest takes the options (which include the data) and gives a response
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
         console.error 'Error posting event to Sentry:', err, body
         @emit("error", err)
       else
         @emit("logged")
+
+
+  # we have already checked that dsn exists
+  _parseDSN: (dsn) =>
+    parsed = nodeurl.parse(dsn)
+    try
+      @project_id = parsed.path.split('/')[1]
+      [@key, @secret] = parsed.auth.split ':'
+      @enabled = true
+    catch err
+      @enabled = false
+      @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
