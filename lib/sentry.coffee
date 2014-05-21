@@ -33,8 +33,6 @@ module.exports = class Sentry extends events.EventEmitter
       enable_env: ['production']
     return
 
-  # This creates a new error object
-  # Then it invokes send on this object
   error: (err, message, logger, extra) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
@@ -51,7 +49,6 @@ module.exports = class Sentry extends events.EventEmitter
 
     @_send data
 
-  # Same as error but a message
   message: (message, logger, extra) =>
     data =
       message: message
@@ -72,13 +69,8 @@ module.exports = class Sentry extends events.EventEmitter
     # If you send data.logger and it's not a string, Sentry tells you that it succeeded and sends
     # you an event ID, Sentry doesn't actually do anything and the event ID that they give you
     # is nonexistent. #dealwithit
-    # why not stringify it?
     if data.logger? and not _(data.logger).isString()
-      # return @emit 'error', new Error "Would have sent to sentry but logger must be a string, was #{JSON.stringify data.logger}"
-      data.logger = JSON.stringify data.logger + "\nlogger should be a string. It was #{typeof data.logger}"
-      @emit 'error', new Error "Logger should be a string" # is this needed -> find out what emit does. could console.error ?
-
-
+      return @emit 'error', new Error "Would have sent to sentry but logger must be a string, was #{JSON.stringify data.logger}"
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
@@ -86,7 +78,6 @@ module.exports = class Sentry extends events.EventEmitter
       headers:
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node"
       json: data
-    # quest takes the options (which include the data) and gives a response
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
         console.error 'Error posting event to Sentry:', err, body
