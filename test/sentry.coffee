@@ -113,7 +113,7 @@ describe 'sentry-node', ->
     @sentry.error new Error('Error message'), '/path/to/logger', 'culprit'
     scope.done()
 
-  it.only 'send error correctly when culprit not defined', ->
+  it 'send error correctly when culprit not defined', ->
     scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
