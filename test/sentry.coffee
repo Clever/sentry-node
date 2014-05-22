@@ -16,22 +16,22 @@ describe 'sentry-node', ->
 
   it 'setup sentry client from SENTRY_DSN correctly', ->
     # mock sentry dsn with random uuid as public_key and secret_key
-    dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
+    dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
 
     process.env.SENTRY_DSN = dsn
     _sentry = new Sentry()
-    assert.equal _sentry.key, 'c28500314a0f4cf28b6d658c3dd37ddb'
-    assert.equal _sentry.secret, 'a5d3fcd72b70494b877a1c2deba6ad74'
-    assert.equal _sentry.project_id, '16088'
+    assert.equal _sentry.key, '1234567890abcdef'
+    assert.equal _sentry.secret, 'fedcba0987654321'
+    assert.equal _sentry.project_id, '12345'
     assert.equal os.hostname(), _sentry.hostname
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
 
     delete process.env.SENTRY_DSN
     _sentry = new Sentry dsn
-    assert.equal _sentry.key, 'c28500314a0f4cf28b6d658c3dd37ddb'
-    assert.equal _sentry.secret, 'a5d3fcd72b70494b877a1c2deba6ad74'
-    assert.equal _sentry.project_id, '16088'
+    assert.equal _sentry.key, '1234567890abcdef'
+    assert.equal _sentry.secret, 'fedcba0987654321'
+    assert.equal _sentry.project_id, '12345'
     assert.equal os.hostname(), _sentry.hostname
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
@@ -58,12 +58,12 @@ describe 'sentry-node', ->
     assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
 
   it 'invalid DSN should disable the client', ->
-    _sentry = new Sentry "https://app.getsentry.com/16088"
+    _sentry = new Sentry "https://app.getsentry.com/12345"
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
 
   it 'passed in settings should update credentials of sentry client', ->
-    dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
+    dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
     process.env.SENTRY_DSN = dsn
     _sentry = new Sentry(sentry_settings)
     assert.equal sentry_settings.key, _sentry.key
