@@ -37,7 +37,7 @@ var sentry = new Sentry({
 });
 ```
 
-You can also pass additional parameters to sentry after the DSN. Note that these parameters will overwrite the values passed by the DSN if the keys match.
+You can pass additional parameters to sentry after the DSN. Note that these parameters will overwrite the values passed by the DSN if the keys match.
 ```javascript
 var sentry = new Sentry('<your Sentry DSN>', {additional:"parameters"});
 ```
