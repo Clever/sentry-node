@@ -48,7 +48,7 @@ var sentry = new Sentry({
 
 ### Error
 ```javascript
-sentry.error(err, message, logger, extra);
+sentry.error(err, culprit, logger, extra);
 ```
 
 #### sample
@@ -64,13 +64,13 @@ sentry.error(
   }
 );
 ```
-
+This image is out of date!
 ![image](http://i.imgur.com/xEHX8P3.png)
 
 #### arguments
 
 * **err:** the error object to log, must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
-* **message:** `culprit`, big text that appears at the top (you'll probably want to use something different from `err.message`)
+* **culprit:** `culprit`, big text that appears at the top (you'll probably want to use something different from `err.message`)
 * **logger:** the name of the logger which created the error
 * **extra:** (optional) an object that gives more context about the error, it will be augmented with a field `stacktrace` containing the value of `err.stack`
 
@@ -106,6 +106,7 @@ The Sentry client emits two events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
+- `'note'`: emitted when the logger parameter is not passed as a string.
 
 ```javascript
 sentry.on('logged', function(){
