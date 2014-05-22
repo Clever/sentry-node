@@ -28,13 +28,6 @@ You can initialize `sentry-node` by passing in a Sentry DSN:
 var sentry = new Sentry('<your Sentry DSN>');
 ```
 
-Or you can set it as an environment variable:
-```javascript
-// if process.env.SENTRY_DSN is set to your Sentry DSN
-var sentry = new Sentry();
-```
-Passing a DSN to `Sentry` will override a DSN detected from the `SENTRY_DSN` environment variable.
-
 You can also pass in the individual parameters that make up the DSN as an object:
 ```javascript
 var sentry = new Sentry({
@@ -44,7 +37,12 @@ var sentry = new Sentry({
 });
 ```
 
-**Note:** If `SENTRY_DSN` is not set in the environment or the DSN passed to `Sentry` is invalid, the client will be disabled. You will still be able to call its methods, but no data will be sent to Sentry. This can be useful behavior for testing and development environments, where you may not want to be logging errors to Sentry.
+You can pass additional parameters to sentry after the DSN. Note that these parameters will overwrite the values passed by the DSN if the keys match.
+```javascript
+var sentry = new Sentry('<your Sentry DSN>', {additional:"parameters"});
+```
+
+**Note:** If the DSN passed to `Sentry` is invalid, the client will be disabled. You will still be able to call its methods, but no data will be sent to Sentry. This can be useful behavior for testing and development environments, where you may not want to be logging errors to Sentry.
 
 ### Error
 ```javascript
