@@ -9,34 +9,45 @@ sentry_settings = require("#{__dirname}/credentials").sentry
 
 describe 'sentry-node', ->
 
+  # mock sentry dsn with random uuid as public_key and secret_key
+  dsn = 'https://123456789abcdefb:fedcba09876543214@app.getsentry.com/13578'
+  dsn2 = 'https://123456789abcdefc:fedcba09876543215@app.getsentry.com/13579'
+
   before ->
-    @sentry = new Sentry sentry_settings
+    @sentry = new Sentry dsn, sentry_settings
     # because only in production env sentry api would make http request
     process.env.NODE_ENV = 'production'
 
-  it 'setup sentry client from SENTRY_DSN correctly', ->
-    # mock sentry dsn with random uuid as public_key and secret_key
-    dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
 
-    process.env.SENTRY_DSN = dsn
-    _sentry = new Sentry()
-    assert.equal _sentry.key, 'c28500314a0f4cf28b6d658c3dd37ddb'
-    assert.equal _sentry.secret, 'a5d3fcd72b70494b877a1c2deba6ad74'
-    assert.equal _sentry.project_id, '16088'
-    assert.equal os.hostname(), _sentry.hostname
-    assert.deepEqual ['production'], _sentry.enable_env
-    assert.equal _sentry.enabled, true
-
-    delete process.env.SENTRY_DSN
+  it 'sets up sentry client from specified DSN correctly', ->
     _sentry = new Sentry dsn
-    assert.equal _sentry.key, 'c28500314a0f4cf28b6d658c3dd37ddb'
-    assert.equal _sentry.secret, 'a5d3fcd72b70494b877a1c2deba6ad74'
-    assert.equal _sentry.project_id, '16088'
+    assert.equal _sentry.key, '123456789abcdefb'
+    assert.equal _sentry.secret, 'fedcba09876543214'
+    assert.equal _sentry.project_id, '13578'
     assert.equal os.hostname(), _sentry.hostname
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
 
-  it 'setup sentry client from credentials correctly', ->
+  it 'sets up sentry client from specified DSN correctly and adds parameters', ->
+    _sentry = new Sentry dsn, param: 'val'
+    assert.equal _sentry.key, '123456789abcdefb'
+    assert.equal _sentry.secret, 'fedcba09876543214'
+    assert.equal _sentry.project_id, '13578'
+    assert.equal _sentry.param, 'val'
+    assert.equal os.hostname(), _sentry.hostname
+    assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.enabled, true
+
+    _sentry = new Sentry dsn, { enable_env: ['production', 'staging'] }
+    assert.deepEqual _sentry.enable_env, ['production', 'staging']
+
+  it 'sets up sentry from object correctly', ->
+    _sentry = new Sentry(sentry_settings)
+    assert.equal sentry_settings.key, _sentry.key
+    assert.equal sentry_settings.secret, _sentry.secret
+    assert.equal sentry_settings.project_id, _sentry.project_id
+
+  it 'overwrites credentials when more are passed in settings', ->
     assert.equal sentry_settings.key, @sentry.key
     assert.equal sentry_settings.secret, @sentry.secret
     assert.equal sentry_settings.project_id, @sentry.project_id
@@ -44,31 +55,20 @@ describe 'sentry-node', ->
     assert.deepEqual ['production'], @sentry.enable_env
     assert.equal @sentry.enabled, true
 
-  it 'setup sentry client settings from settings passed in correctly', ->
-    _sentry = new Sentry { enable_env: ['production', 'staging'] }
-    assert.deepEqual _sentry.enable_env, ['production', 'staging']
 
   it 'empty or missing DSN should disable the client', ->
     _sentry = new Sentry ""
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+    assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
 
     _sentry = new Sentry()
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+    assert.equal _sentry.disable_message, "Sentry client expected String or Object as argument. You passed: undefined."
 
   it 'invalid DSN should disable the client', ->
-    _sentry = new Sentry "https://app.getsentry.com/16088"
+    _sentry = new Sentry "https://app.getsentry.com/13578"
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-
-  it 'passed in settings should update credentials of sentry client', ->
-    dsn = 'https://c28500314a0f4cf28b6d658c3dd37ddb:a5d3fcd72b70494b877a1c2deba6ad74@app.getsentry.com/16088'
-    process.env.SENTRY_DSN = dsn
-    _sentry = new Sentry(sentry_settings)
-    assert.equal sentry_settings.key, _sentry.key
-    assert.equal sentry_settings.secret, _sentry.secret
-    assert.equal sentry_settings.project_id, _sentry.project_id
 
   it 'warns if passed an error that isnt an instance of Error', ->
     scope = nock('https://app.getsentry.com')
@@ -76,14 +76,14 @@ describe 'sentry-node', ->
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
         params = JSON.parse path
-        if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
+        if _.every(['message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
           if params.extra?.stacktrace? and params.message.indexOf('CONVERT_TO_ERROR:') != -1
             return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    @sentry.error 'not an Error', 'message', 'path/to/logger'
+    @sentry.error 'not an Error', 'path/to/logger'
     scope.done()
 
   it 'send error correctly', ->
@@ -92,14 +92,14 @@ describe 'sentry-node', ->
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
         params = JSON.parse path
-        if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
+        if _.every(['message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
           if params.extra?.stacktrace?
             return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    @sentry.error new Error('Error message'), 'message', '/path/to/logger'
+    @sentry.error new Error('Error message'), '/path/to/logger'
     scope.done()
 
   it 'send message correctly', ->
@@ -109,7 +109,7 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['message','logger','level'], (prop) -> _.has(params, prop))
-          unless _.some(['culprit','server_name','platform','extra'], (prop) -> _.has(params, prop))
+          unless _.some(['server_name','platform','extra'], (prop) -> _.has(params, prop))
             return 'message'
         throw Error 'Body of Sentry message request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'message')
@@ -128,7 +128,7 @@ describe 'sentry-node', ->
       scope.done()
       done()
 
-    @sentry.error new Error('wtf?'), "Unknown Error", "/"
+    @sentry.error new Error('wtf?'), "/"
 
   it 'emit error event when the api call returned an error', (done) ->
     scope = nock('https://app.getsentry.com')
@@ -156,9 +156,9 @@ describe 'sentry-node', ->
 
     _sentry.message "hey!", "/"
 
-  it 'emits an error if you pass it a non-string logger', (done) ->
+  it 'converts the logger to a string if you pass it a non string logger', (done) ->
     logger = key: '/path/to/logger'
-    @sentry.once 'error', (err) ->
-      assert.equal err.message, "logger must be a string, was #{JSON.stringify logger}"
+    @sentry.once 'note', (err) ->
+      assert.equal err.message, 'CONVERT_TO_STRING'
       done()
-    @sentry.error new Error('Error message'), 'message', logger
+    @sentry.error new Error('Error message'), logger
