@@ -28,13 +28,6 @@ You can initialize `sentry-node` by passing in a Sentry DSN:
 var sentry = new Sentry('<your Sentry DSN>');
 ```
 
-Or you can set it as an environment variable:
-```javascript
-// if process.env.SENTRY_DSN is set to your Sentry DSN
-var sentry = new Sentry();
-```
-Passing a DSN to `Sentry` will override a DSN detected from the `SENTRY_DSN` environment variable.
-
 You can also pass in the individual parameters that make up the DSN as an object:
 ```javascript
 var sentry = new Sentry({
@@ -44,11 +37,16 @@ var sentry = new Sentry({
 });
 ```
 
-**Note:** If `SENTRY_DSN` is not set in the environment or the DSN passed to `Sentry` is invalid, the client will be disabled. You will still be able to call its methods, but no data will be sent to Sentry. This can be useful behavior for testing and development environments, where you may not want to be logging errors to Sentry.
+You can also pass additional parameters to sentry after the DSN. Note that these parameters will overwrite the values passed by the DSN if the keys match.
+```javascript
+var sentry = new Sentry('<your Sentry DSN>', {additional:"parameters"});
+```
+
+**Note:** If the DSN passed to `Sentry` is invalid, the client will be disabled. You will still be able to call its methods, but no data will be sent to Sentry. This can be useful behavior for testing and development environments, where you may not want to be logging errors to Sentry.
 
 ### Error
 ```javascript
-sentry.error(err, message, logger, extra);
+sentry.error(err, culprit, logger, extra);
 ```
 
 #### sample
@@ -65,12 +63,13 @@ sentry.error(
 );
 ```
 
+This images is out of date and should be changed!
 ![image](http://i.imgur.com/xEHX8P3.png)
 
 #### arguments
 
 * **err:** the error object to log, must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
-* **message:** `culprit`, big text that appears at the top (you'll probably want to use something different from `err.message`)
+* **culprit:** `culprit`, big text that appears at the top (you'll probably want to use something different from `err.message`)
 * **logger:** the name of the logger which created the error
 * **extra:** (optional) an object that gives more context about the error, it will be augmented with a field `stacktrace` containing the value of `err.stack`
 
@@ -106,6 +105,7 @@ The Sentry client emits two events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
+- `'note'`: emitted when the logger parameter is not passed as a string.
 
 ```javascript
 sentry.on('logged', function(){
