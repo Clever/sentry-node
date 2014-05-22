@@ -7,29 +7,28 @@ events  = require 'events'
 
 module.exports = class Sentry extends events.EventEmitter
 
-  constructor: (settings) ->
-    # first check if sentry dsn is set as environment variable
-    @_parseDSN(process.env.SENTRY_DSN or "")
-
-    # credentials are updated if explicitly passed in
-    if settings?
-      if _(settings).isString()
-        @_parseDSN settings
-      else if _(settings).isObject()
-        _(@).extend settings
-        if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
-          @enabled = true
-        else
-          @enabled = false
-          @disable_message = "Credentials you passed in aren't complete."
+  # constructor must be provided a credentials string or object
+  # it can also optionally be provided a settings object
+  # note that if the settings object contains credentials, the credentials will be overwritten
+  constructor: (credentials, settings) ->
+    if _.isString credentials
+      @_parseDSN credentials
+    else if _.isObject credentials
+      _.extend @, credentials
+      if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(credentials, prop))
+        @enabled = true
       else
         @enabled = false
-        @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
+        @disable_message = "Credentials you passed in aren't complete."
+    else
+      @enabled = false
+      @disable_message = "Sentry client expected String or Object as argument. You passed: #{credentials}."
 
-    _(@).defaults
+    _.extend @, settings
+
+    _.defaults @,
       hostname: os.hostname()
       enable_env: ['production']
-    return
 
   error: (err, message, logger, extra) =>
     unless err instanceof Error

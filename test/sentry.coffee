@@ -9,25 +9,16 @@ sentry_settings = require("#{__dirname}/credentials").sentry
 
 describe 'sentry-node', ->
 
+
   before ->
     @sentry = new Sentry sentry_settings
     # because only in production env sentry api would make http request
     process.env.NODE_ENV = 'production'
 
-  it 'setup sentry client from SENTRY_DSN correctly', ->
-    # mock sentry dsn with random uuid as public_key and secret_key
-    dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
+  # mock sentry dsn with random uuid as public_key and secret_key
+  dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
 
-    process.env.SENTRY_DSN = dsn
-    _sentry = new Sentry()
-    assert.equal _sentry.key, '1234567890abcdef'
-    assert.equal _sentry.secret, 'fedcba0987654321'
-    assert.equal _sentry.project_id, '12345'
-    assert.equal os.hostname(), _sentry.hostname
-    assert.deepEqual ['production'], _sentry.enable_env
-    assert.equal _sentry.enabled, true
-
-    delete process.env.SENTRY_DSN
+  it 'setup sentry client from specified DSN correctly', ->
     _sentry = new Sentry dsn
     assert.equal _sentry.key, '1234567890abcdef'
     assert.equal _sentry.secret, 'fedcba0987654321'
@@ -36,7 +27,17 @@ describe 'sentry-node', ->
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
 
-  it 'setup sentry client from credentials correctly', ->
+  it 'sets up sentry client from specified DSN and adds optional parameters', ->
+    _sentry = new Sentry dsn, param:'test'
+    assert.equal _sentry.key, '1234567890abcdef'
+    assert.equal _sentry.secret, 'fedcba0987654321'
+    assert.equal _sentry.project_id, '12345'
+    assert.equal os.hostname(), _sentry.hostname
+    assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.enabled, true
+    assert.equal _sentry.param, 'test'
+
+  it 'setup sentry client from object correctly', ->
     assert.equal sentry_settings.key, @sentry.key
     assert.equal sentry_settings.secret, @sentry.secret
     assert.equal sentry_settings.project_id, @sentry.project_id
@@ -44,8 +45,17 @@ describe 'sentry-node', ->
     assert.deepEqual ['production'], @sentry.enable_env
     assert.equal @sentry.enabled, true
 
+  it 'overwrites credentials if more are passed in in the settings', ->
+    _sentry = new Sentry dsn, sentry_settings
+    assert.equal sentry_settings.key, _sentry.key
+    assert.equal sentry_settings.secret, _sentry.secret
+    assert.equal sentry_settings.project_id, _sentry.project_id
+    assert.equal os.hostname(), _sentry.hostname
+    assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.enabled, true
+
   it 'setup sentry client settings from settings passed in correctly', ->
-    _sentry = new Sentry { enable_env: ['production', 'staging'] }
+    _sentry = new Sentry dsn, { enable_env: ['production', 'staging'] }
     assert.deepEqual _sentry.enable_env, ['production', 'staging']
 
   it 'empty or missing DSN should disable the client', ->
@@ -55,20 +65,12 @@ describe 'sentry-node', ->
 
     _sentry = new Sentry()
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+    assert.equal _sentry.disable_message, "Sentry client expected String or Object as argument. You passed: undefined."
 
   it 'invalid DSN should disable the client', ->
     _sentry = new Sentry "https://app.getsentry.com/12345"
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-
-  it 'passed in settings should update credentials of sentry client', ->
-    dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
-    process.env.SENTRY_DSN = dsn
-    _sentry = new Sentry(sentry_settings)
-    assert.equal sentry_settings.key, _sentry.key
-    assert.equal sentry_settings.secret, _sentry.secret
-    assert.equal sentry_settings.project_id, _sentry.project_id
 
   it 'warns if passed an error that isnt an instance of Error', ->
     scope = nock('https://app.getsentry.com')
