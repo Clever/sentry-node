@@ -38,21 +38,30 @@ describe 'sentry-node', ->
     assert.equal _sentry.param, 'test'
 
   it 'setup sentry client from object correctly', ->
-    assert.equal sentry_settings.key, @sentry.key
-    assert.equal sentry_settings.secret, @sentry.secret
-    assert.equal sentry_settings.project_id, @sentry.project_id
-    assert.equal os.hostname(), @sentry.hostname
-    assert.deepEqual ['production'], @sentry.enable_env
+    assert.equal @sentry.key, sentry_settings.key
+    assert.equal @sentry.secret, sentry_settings.secret
+    assert.equal @sentry.project_id, sentry_settings.project_id
+    assert.equal @sentry.hostname, os.hostname()
+    assert.deepEqual @sentry.enable_env, ['production']
     assert.equal @sentry.enabled, true
 
   it 'overwrites credentials if more are passed in in the settings', ->
     _sentry = new Sentry dsn, sentry_settings
-    assert.equal sentry_settings.key, _sentry.key
-    assert.equal sentry_settings.secret, _sentry.secret
-    assert.equal sentry_settings.project_id, _sentry.project_id
-    assert.equal os.hostname(), _sentry.hostname
-    assert.deepEqual ['production'], _sentry.enable_env
+    assert.equal _sentry.key, sentry_settings.key
+    assert.equal _sentry.secret, sentry_settings.secret
+    assert.equal _sentry.project_id, sentry_settings.project_id
+    assert.equal _sentry.hostname, os.hostname()
+    assert.deepEqual _sentry.enable_env, ['production']
     assert.equal _sentry.enabled, true
+
+  it 'refuses to enable the sentry with incomplete credentials', ->
+    _sentry = new Sentry _.omit sentry_settings, 'secret'
+    assert.equal _sentry.key, sentry_settings.key
+    assert.equal _sentry.project_id, sentry_settings.project_id
+    assert.equal _sentry.hostname, os.hostname()
+    assert.deepEqual _sentry.enable_env, ['production']
+    assert.equal _sentry.enabled, false
+    assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
   it 'setup sentry client settings from settings passed in correctly', ->
     _sentry = new Sentry dsn, { enable_env: ['production', 'staging'] }
