@@ -70,7 +70,7 @@ describe 'sentry-node', ->
   it 'empty or missing DSN should disable the client', ->
     _sentry = new Sentry ""
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+    assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
 
     _sentry = new Sentry()
     assert.equal _sentry.enabled, false

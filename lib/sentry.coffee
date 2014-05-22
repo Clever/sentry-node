@@ -82,15 +82,11 @@ module.exports = class Sentry extends events.EventEmitter
         @emit("logged")
 
   _parseDSN: (dsn) =>
-    if dsn
-      parsed = nodeurl.parse(dsn)
-      try
-        @project_id = parsed.path.split('/')[1]
-        [@key, @secret] = parsed.auth.split ':'
-        @enabled = true
-      catch err
-        @enabled = false
-        @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
-    else
+    parsed = nodeurl.parse(dsn)
+    try
+      @project_id = parsed.path.split('/')[1]
+      [@key, @secret] = parsed.auth.split ':'
+      @enabled = true
+    catch err
       @enabled = false
-      @disable_message = "You SENTRY_DSN is missing or empty. Sentry client is disabled."
+      @disable_message = "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
