@@ -30,13 +30,12 @@ module.exports = class Sentry extends events.EventEmitter
       hostname: os.hostname()
       enable_env: ['production']
 
-  error: (err, culprit, logger, extra) =>
+  error: (err, logger, extra) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
       err = new Error 'CONVERT_TO_ERROR:' + JSON.stringify(err, null, 2)
     data =
-      culprit: culprit # big text that appears at the top
-      message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
+      message: err.message # User readable error message that is shown in hipchat
       logger: logger
       server_name: @hostname
       platform: 'node'
