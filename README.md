@@ -71,7 +71,7 @@ This image is out of date!
 
 * **err:** the error object to log, must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
 * **logger:** the name of the logger which detected the error
-* **culprit:** (optional) a string that specifies which function caused the error. If this is not known, should be `null`. If included, it the big text at the top of the sentry error.
+* **culprit:** a string that specifies which function caused the error. If this is not known, should be `null`. If included, it the big text at the top of the sentry error.
 * **extra:** (optional) an object that gives more context about the error, it will be augmented with a field `stacktrace` containing the value of `err.stack`
 
 ### Message
