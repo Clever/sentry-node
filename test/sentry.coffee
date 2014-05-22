@@ -19,7 +19,6 @@ describe 'sentry-node', ->
   dsn2 = 'https://123456789abcdefc:fedcba09876543215@app.getsentry.com/13579'
 
   it 'setup sentry client from SENTRY_DSN correctly', ->
-
     process.env.SENTRY_DSN = dsn
     _sentry = new Sentry()
     assert.equal _sentry.key, '123456789abcdefb'
@@ -171,6 +170,6 @@ describe 'sentry-node', ->
   it 'converts the logger to a string if you pass it a non string logger', (done) ->
     logger = key: '/path/to/logger'
     @sentry.once 'note', (err) ->
-      assert.equal err.message, "#{JSON.stringify logger}\nNB: logger was converted to a string."
+      assert.equal err.message, 'CONVERT_TO_STRING'
       done()
     @sentry.error new Error('Error message'), 'message', logger

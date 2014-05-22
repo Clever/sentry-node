@@ -12,6 +12,7 @@ module.exports = class Sentry extends events.EventEmitter
     if not process.env.SENTRY_DSN? and not settings?
       @enabled = false
       @disable_message = "Your SENTRY_DSN is missing or empty. Sentry client is disabled."
+
     else if settings?
       if _.isString settings
         @_parseDSN settings
@@ -32,12 +33,12 @@ module.exports = class Sentry extends events.EventEmitter
       hostname: os.hostname()
       enable_env: ['production']
 
-  error: (err, message, logger, extra) =>
+  error: (err, culprit, logger, extra) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
       err = new Error 'CONVERT_TO_ERROR:' + JSON.stringify(err, null, 2)
     data =
-      culprit: message # big text that appears at the top
+      culprit: culprit # big text that appears at the top
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
       logger: logger
       server_name: @hostname
@@ -67,7 +68,7 @@ module.exports = class Sentry extends events.EventEmitter
 
     # data.logger must be a string else sentry fails quietly
     if data.logger? and not _(data.logger).isString()
-      data.logger = "#{JSON.stringify data.logger}\nNB: logger was converted to a string."
+      data.logger = 'CONVERT_TO_STRING'
       @emit 'note', new Error data.logger
 
     options =
