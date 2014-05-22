@@ -7,29 +7,26 @@ events  = require 'events'
 
 module.exports = class Sentry extends events.EventEmitter
 
-  # If settings are passed in they take precedence over the env var SENTRY_DSN
-  constructor: (settings) ->
-    if not process.env.SENTRY_DSN? and not settings?
-      @enabled = false
-      @disable_message = "Your SENTRY_DSN is missing or empty. Sentry client is disabled."
-
-    else if settings?
-      if _.isString settings
-        @_parseDSN settings
-      else if _.isObject settings
-        _(@).extend settings
-        if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(settings, prop))
-          @enabled = true
-        else
-          @enabled = false
-          @disable_message = "Credentials you passed in aren't complete."
+  # Credentials must be passed in as a string or an object
+  # Settings can be passed in as an object. Contains other parameters
+  # If settings contains credentials, these will overwrite those specified in credentials
+  constructor: (credentials, settings) ->
+    if _.isString credentials
+      @_parseDSN credentials
+    else if _.isObject credentials
+      _.extend @, credentials
+      if _.every(['key', 'secret', 'project_id'], (prop) -> _.has(credentials, prop))
+        @enabled = true
       else
         @enabled = false
-        @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
+        @disable_message = "Credentials you passed in aren't complete."
     else
-      @_parseDSN(process.env.SENTRY_DSN)
+      @enabled = false
+      @disable_message = "Sentry client expected String or Object as argument. You passed: #{settings}."
 
-    _(@).defaults
+    _.extend @, settings
+
+    _.defaults @,
       hostname: os.hostname()
       enable_env: ['production']
 
