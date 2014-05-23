@@ -30,7 +30,7 @@ module.exports = class Sentry extends events.EventEmitter
       hostname: os.hostname()
       enable_env: ['production']
 
-  error: (err, logger, culprit, extra={}) =>
+  error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
       err = new Error "CONVERT_TO_ERROR: #{JSON.stringify(err, null, 2)}"
