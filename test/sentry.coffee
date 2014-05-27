@@ -9,7 +9,6 @@ sentry_settings = require("#{__dirname}/credentials").sentry
 
 describe 'sentry-node', ->
 
-
   before ->
     @sentry = new Sentry sentry_settings
     # because only in production env sentry api would make http request
@@ -27,16 +26,6 @@ describe 'sentry-node', ->
     assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
 
-  it 'sets up sentry client from specified DSN and adds optional parameters', ->
-    _sentry = new Sentry dsn, param:'test'
-    assert.equal _sentry.key, '1234567890abcdef'
-    assert.equal _sentry.secret, 'fedcba0987654321'
-    assert.equal _sentry.project_id, '12345'
-    assert.equal os.hostname(), _sentry.hostname
-    assert.deepEqual ['production'], _sentry.enable_env
-    assert.equal _sentry.enabled, true
-    assert.equal _sentry.param, 'test'
-
   it 'setup sentry client from object correctly', ->
     assert.equal @sentry.key, sentry_settings.key
     assert.equal @sentry.secret, sentry_settings.secret
@@ -45,32 +34,17 @@ describe 'sentry-node', ->
     assert.deepEqual @sentry.enable_env, ['production']
     assert.equal @sentry.enabled, true
 
-  it 'overwrites credentials if more are passed in in the settings', ->
-    _sentry = new Sentry dsn, sentry_settings
-    assert.equal _sentry.key, sentry_settings.key
-    assert.equal _sentry.secret, sentry_settings.secret
-    assert.equal _sentry.project_id, sentry_settings.project_id
-    assert.equal _sentry.hostname, os.hostname()
-    assert.deepEqual _sentry.enable_env, ['production']
-    assert.equal _sentry.enabled, true
-
   it 'refuses to enable the sentry with incomplete credentials', ->
     _sentry = new Sentry _.omit sentry_settings, 'secret'
-    assert.equal _sentry.key, sentry_settings.key
-    assert.equal _sentry.project_id, sentry_settings.project_id
     assert.equal _sentry.hostname, os.hostname()
     assert.deepEqual _sentry.enable_env, ['production']
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
-  it 'setup sentry client settings from settings passed in correctly', ->
-    _sentry = new Sentry dsn, { enable_env: ['production', 'staging'] }
-    assert.deepEqual _sentry.enable_env, ['production', 'staging']
-
   it 'empty or missing DSN should disable the client', ->
     _sentry = new Sentry ""
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
+    assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
     _sentry = new Sentry()
     assert.equal _sentry.enabled, false
@@ -79,7 +53,7 @@ describe 'sentry-node', ->
   it 'invalid DSN should disable the client', ->
     _sentry = new Sentry "https://app.getsentry.com/12345"
     assert.equal _sentry.enabled, false
-    assert.equal _sentry.disable_message, "Your SENTRY_DSN is invalid. Use correct DSN to enable your sentry client."
+    assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
   it 'warns if passed an error that isnt an instance of Error', ->
     scope = nock('https://app.getsentry.com')

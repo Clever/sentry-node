@@ -37,11 +37,6 @@ var sentry = new Sentry({
 });
 ```
 
-You can pass additional parameters to sentry after the DSN. Note that these parameters will overwrite the values passed by the DSN if the keys match.
-```javascript
-var sentry = new Sentry('<your Sentry DSN>', {additional:"parameters"});
-```
-
 **Note:** If the DSN passed to `Sentry` is invalid, the client will be disabled. You will still be able to call its methods, but no data will be sent to Sentry. This can be useful behavior for testing and development environments, where you may not want to be logging errors to Sentry.
 
 ### Error
