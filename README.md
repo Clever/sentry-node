@@ -58,7 +58,7 @@ sentry.error(
 );
 ```
 This image is out of date!
-![image](http://i.imgur.com/xEHX8P3.png)
+![image](http://imgur.com/VMTshz3)
 
 #### arguments
 
