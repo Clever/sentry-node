@@ -94,7 +94,7 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    @sentry.error 'not an Error', 'message', 'path/to/logger'
+    @sentry.error 'not an Error', 'path/to/logger', 'culprit'
     scope.done()
 
   it 'send error correctly', ->
@@ -110,7 +110,23 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    @sentry.error new Error('Error message'), 'message', '/path/to/logger'
+    @sentry.error new Error('Error message'), '/path/to/logger', 'culprit'
+    scope.done()
+
+  it 'send error correctly when culprit not defined', ->
+    scope = nock('https://app.getsentry.com')
+      .matchHeader('X-Sentry-Auth'
+      , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .filteringRequestBody (path) ->
+        params = JSON.parse path
+        if _.every(['message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
+          if params.extra?.stacktrace?
+            return 'error'
+        throw Error 'Body of Sentry error request is incorrect.'
+      .post("/api/#{sentry_settings.project_id}/store/", 'error')
+      .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
+
+    @sentry.error new Error('Error message'), '/path/to/logger', null
     scope.done()
 
   it 'send message correctly', ->
@@ -172,4 +188,4 @@ describe 'sentry-node', ->
     @sentry.once 'warning', (err) ->
       assert.equal err.message, "WARNING: logger not passed as string! #{JSON.stringify(logger)}"
       done()
-    @sentry.error new Error('Error message'), "some culprit", logger
+    @sentry.error new Error('Error message'), logger, "some culprit"
