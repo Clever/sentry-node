@@ -36,8 +36,8 @@ module.exports = class Sentry extends events.EventEmitter
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
-      console.error 'error must be an instance of Error', err
       err = new Error "WARNING: err not passed as Error! #{JSON.stringify(err, null, 2)}"
+      @emit 'warning', new Error err
     data =
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
       logger: logger
