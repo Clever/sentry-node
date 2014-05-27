@@ -33,7 +33,7 @@ module.exports = class Sentry extends events.EventEmitter
   error: (err, culprit, logger, extra) =>
     unless err instanceof Error
       console.error 'error must be an instance of Error', err
-      err = new Error "CONVERT_TO_ERROR: #{JSON.stringify(err, null, 2)}"
+      err = new Error "WARNING: err not passed as Error! #{JSON.stringify(err, null, 2)}"
     data =
       culprit: culprit # big text that appears at the top
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
@@ -64,8 +64,8 @@ module.exports = class Sentry extends events.EventEmitter
 
     # data.logger must be a string else sentry fails quietly
     if data.logger? and not _.isString data.logger
-      data.logger = "CONVERT_TO_STRING: #{JSON.stringify(data.logger)}"
-      @emit 'note', new Error data.logger
+      data.logger = "WARNING: logger not passed as string! #{JSON.stringify(data.logger)}"
+      @emit 'warning', new Error data.logger
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
