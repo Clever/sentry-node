@@ -40,8 +40,7 @@ module.exports = class Sentry extends events.EventEmitter
       server_name: @hostname
       platform: 'node'
       level: 'error'
-      extra: _.extend extra,
-        stacktrace: err.stack
+      extra: _.extend extra, {stacktrace: err.stack}
     _.extend data, culprit: culprit if not _.isNull culprit
 
     @_send data
