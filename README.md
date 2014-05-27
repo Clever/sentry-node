@@ -61,10 +61,10 @@ sentry.error(
 
 #### arguments
 
-* **err:** the error object to log, must be an instance of `Error`, `err.message` will be used for the smaller text that appears right under `culprit`
-* **logger:** the name of the logger which detected the error
-* **culprit:** a string that specifies which function caused the error. If this is not known, should be `null`. If included, it the big text at the top of the sentry error.
-* **extra:** (optional) an object that gives more context about the error, it will be augmented with a field `stacktrace` containing the value of `err.stack`
+* **err:** the error object to log, must be an instance of `Error`. `err.message` will be used for the smaller text that appears right under `culprit`
+* **logger:** the place where the error was detected
+* **culprit:** the location of the code that caused the error. If not known, should be `null`. If included, is the big text at the top of the sentry error.
+* **extra:** (optional) an object that gives more context about the error, it is augmented with `stacktrace` which contains `err.stack`
 
 ### Message
 ```javascript
@@ -89,16 +89,16 @@ sentry.message(
 #### arguments
 
 * **message:** text will be used for both the big text that appears at the top and the smaller text appears right under it
-* **logger:** the name of the logger which created the message
+* **logger:** the place where the error was detected
 * **extra:** (optional) an object that gives more context about the message
 
 ## Events
 
-The Sentry client emits two events that you can listen to:
+The Sentry client emits three events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
-- `'warning'`: emitted when the logger parameter is not passed as a string.
+- `'warning'`: emitted when a value of the incorrect type is passed as err or logger
 
 ```javascript
 sentry.on('logged', function(){
@@ -107,6 +107,9 @@ sentry.on('logged', function(){
 sentry.on('error', function(e){
   console.log('oh well, Sentry is broke.');
   console.log(e);
+})
+sentry.on('warning', function(){
+  console.log('You did something sentry didn't expect');
 })
 ```
 
@@ -121,3 +124,4 @@ If you attach other fields with important data to the `Error` instance, they wil
 Sentry asks for three main fields:
 * `message`: what was the exception? Always the message from the passed in error.
 * `logger`: what piece of code generated the message to Sentry? Usually just whatever application actually holds the Sentry client.
+* `extra`: what other information is needed to determine the cause of the error
