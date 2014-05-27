@@ -88,7 +88,7 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
-          if params.extra?.stacktrace? and params.message.indexOf('CONVERT_TO_ERROR: ') != -1
+          if params.extra?.stacktrace? and params.message.indexOf('WARNING: err') != -1
             return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
@@ -169,7 +169,7 @@ describe 'sentry-node', ->
 
   it 'converts the logger to a string if you pass it a non string logger', (done) ->
     logger = key: '/path/to/logger'
-    @sentry.once 'note', (err) ->
-      assert.equal err.message, "CONVERT_TO_STRING: #{JSON.stringify logger}"
+    @sentry.once 'warning', (err) ->
+      assert.equal err.message, "WARNING: logger not passed as string! #{JSON.stringify(logger)}"
       done()
     @sentry.error new Error('Error message'), "some culprit", logger

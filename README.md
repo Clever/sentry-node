@@ -106,7 +106,7 @@ The Sentry client emits two events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
-- `'note'`: emitted when the logger parameter is not passed as a string.
+- `'warning'`: emitted when the logger parameter is not passed as a string.
 
 ```javascript
 sentry.on('logged', function(){
