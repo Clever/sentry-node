@@ -5,7 +5,6 @@ quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
 
-
 parseDSN = (dsn) =>
   parsed = nodeurl.parse(dsn)
   try
@@ -47,7 +46,6 @@ module.exports = class Sentry extends events.EventEmitter
       level: 'error'
       extra: _.extend extra, {stacktrace: err.stack}
     _.extend data, culprit: culprit if not _.isNull culprit
-
     @_send data
 
   message: (message, logger, extra) =>
@@ -56,7 +54,6 @@ module.exports = class Sentry extends events.EventEmitter
       logger: logger
       level: 'info'
       extra: extra if extra?
-
     @_send data
 
   _send: (data) =>
@@ -83,4 +80,3 @@ module.exports = class Sentry extends events.EventEmitter
         @emit("error", err)
       else
         @emit("logged")
-
