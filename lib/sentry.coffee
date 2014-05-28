@@ -30,9 +30,7 @@ module.exports = class Sentry extends events.EventEmitter
     else
       @disable_message = "Credentials you passed in aren't complete."
 
-    _.defaults @,
-      hostname: os.hostname()
-      enable_env: ['production']
+    @hostname = os.hostname()
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
@@ -60,7 +58,7 @@ module.exports = class Sentry extends events.EventEmitter
     unless @enabled
       return console.log @disable_message
 
-    unless process.env.NODE_ENV in @enable_env
+    unless process.env.NODE_ENV is 'production'
       return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
 
     # data.logger must be a string else sentry fails quietly

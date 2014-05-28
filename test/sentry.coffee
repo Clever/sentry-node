@@ -23,7 +23,6 @@ describe 'sentry-node', ->
     assert.equal _sentry.secret, 'fedcba0987654321'
     assert.equal _sentry.project_id, '12345'
     assert.equal os.hostname(), _sentry.hostname
-    assert.deepEqual ['production'], _sentry.enable_env
     assert.equal _sentry.enabled, true
 
   it 'setup sentry client from object correctly', ->
@@ -31,13 +30,11 @@ describe 'sentry-node', ->
     assert.equal @sentry.secret, sentry_settings.secret
     assert.equal @sentry.project_id, sentry_settings.project_id
     assert.equal @sentry.hostname, os.hostname()
-    assert.deepEqual @sentry.enable_env, ['production']
     assert.equal @sentry.enabled, true
 
   it 'refuses to enable the sentry with incomplete credentials', ->
     _sentry = new Sentry _.omit sentry_settings, 'secret'
     assert.equal _sentry.hostname, os.hostname()
-    assert.deepEqual _sentry.enable_env, ['production']
     assert.equal _sentry.enabled, false
     assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
