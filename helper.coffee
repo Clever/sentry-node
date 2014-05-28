@@ -6,7 +6,7 @@ module.exports =
   scrub: (object) ->
 
     # ensure that if y is a substring of x, y comes AFTER x in this list
-    bads = ['client_id', 'client_secret', 'refresh_token', 'password', 'secret', 'key', 'username']
+    bads = ['client_id', 'client_secret', 'refresh_token', 'password', 'secret', 'key', 'username', 'user']
 
     object = _.deepToFlat object
 
