@@ -181,7 +181,7 @@ describe 'sentry-node', ->
   it 'replaces sensitive url encoded info with [REDACTED]', ->
     object =
       url: 'refresh_token=1234567890asdfghjkl&CliENT_Id=123456789.apps.googleusercontent.com&client_secret=123456789asdfghjkl&grant_type=refresh_token'
-    expected = {url: '[REDACTED]&[REDACTED].apps.googleusercontent.com&[REDACTED]&grant_type=[REDACTED]'}
+    expected = {url: '[REDACTED]&[REDACTED].apps.googleusercontent.com&[REDACTED]&grant_type=refresh_token'}
     assert.deepEqual (h.scrub object), expected
 
   it 'replaces senstive info in string with [REDACTED]', ->
@@ -190,7 +190,7 @@ describe 'sentry-node', ->
       b: 'Error: Username 12345@example.com was taken'
       c: 'username 12345@example.com was taken'
       d: 'Error: Username 12345@example.com'
-      e: 'Error: Username  :  12345@example.com'
+      e: 'Error: Username  =  12345@example.com'
       f: 'Error: Username'
 
     expected =
@@ -199,6 +199,6 @@ describe 'sentry-node', ->
       c: '[REDACTED] was taken'
       d: 'Error: [REDACTED]'
       e: 'Error: [REDACTED]'
-      f: 'Error: [REDACTED]'
+      f: 'Error: Username'
 
     assert.deepEqual (h.scrub object), expected
