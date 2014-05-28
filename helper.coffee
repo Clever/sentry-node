@@ -6,7 +6,8 @@ module.exports =
   scrub: (object) ->
 
     # ensure that if y is a substring of x, y comes AFTER x in this list
-    bads = ['client_id', 'client_secret', 'refresh_token', 'password', 'secret', 'key', 'username', 'user']
+    # what about _csrf and csrfSecret, id
+    bads = ['api_key', 'client_id', 'client_secret', 'refresh_token', 'user_token', 'user_token_secret', 'password', 'secret', 'key', 'username', 'user', 'name', 'api']
 
     object = _.deepToFlat object
 
@@ -32,10 +33,9 @@ module.exports =
           i = s + e
 
         # info can also be included elsewhere. We will redact info in this form
-        # <key><delim><value> where delim is : = or a space e.g.
         reg_bad = new RegExp bad, 'i'
-        delimiters = new RegExp /[ :=]/
-        non_delimiters = new RegExp /[^ :=]/ # NOT the stuff above
+        delimiters = new RegExp /[ =]/
+        non_delimiters = new RegExp /[^ =]/ # NOT the stuff above
         while (start = i.search reg_bad) != -1 # start of the bad
           end1 = start + i[start..].search delimiters #end of the bad
           end2 = end1 + i[end1..].search non_delimiters #end of the delims
