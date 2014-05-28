@@ -8,13 +8,13 @@ events  = require 'events'
 parseDSN = (dsn) =>
   parsed = nodeurl.parse(dsn)
   try
-    data =
+    credentials =
       project_id: parsed.path.split('/')[1]
       key: parsed.auth.split(':')[0]
       secret: parsed.auth.split(':')[1]
   catch err
-    data = {}
-  return data
+    credentials = {}
+  return credentials
 
 module.exports = class Sentry extends events.EventEmitter
 
