@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "underscore": "~1.5.2",
+    "underscore.deep": "~0.2.0",
     "quest": "~0.2.4",
     "debug": "~0.7.4"
   },

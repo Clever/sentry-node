@@ -165,9 +165,6 @@ describe 'sentry-node', ->
       done()
     @sentry.error new Error('Error message'), logger, "some culprit"
 
-  ###
-  Starting tests for scrubbing
-  ###
   it 'scrubs keys with banned names', ->
     object =
       a : 'non sensitive'
