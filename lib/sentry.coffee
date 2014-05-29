@@ -18,7 +18,6 @@ parseDSN = (dsn) =>
 
 module.exports = class Sentry extends events.EventEmitter
 
-  # constructor must be provided a credentials string or object
   constructor: (credentials) ->
     @enabled = false
     credentials = parseDSN credentials if _.isString credentials
