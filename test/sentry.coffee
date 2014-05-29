@@ -5,6 +5,7 @@ nock = require 'nock'
 
 Sentry = require("#{__dirname}/../lib/sentry")
 sentry_settings = require("#{__dirname}/credentials").sentry
+h = require ("#{__dirname}/../helper")
 
 
 describe 'sentry-node', ->
@@ -163,3 +164,41 @@ describe 'sentry-node', ->
       assert.equal err.message, "WARNING: logger not passed as string! #{JSON.stringify(logger)}"
       done()
     @sentry.error new Error('Error message'), logger, "some culprit"
+
+  it 'scrubs keys with banned names', ->
+    object =
+      a : 'non sensitive'
+      b :
+        secret : 'shhhh'
+        d : 'non sensitive'
+        big_Secret: 'SHHHH'
+      passwords :
+        api: 'qwerty'
+
+    expected = {a: 'non sensitive', b : {d: 'non sensitive'}}
+    assert.deepEqual (h.scrub object), expected
+
+  it 'replaces sensitive url encoded info with [REDACTED]', ->
+    object =
+      url: 'refresh_token=1234567890asdfghjkl&CliENT_Id=123456789.apps.googleusercontent.com&client_secret=123456789asdfghjkl&grant_type=refresh_token'
+    expected = {url: '[REDACTED]&[REDACTED].apps.googleusercontent.com&[REDACTED]&grant_type=refresh_token'}
+    assert.deepEqual (h.scrub object), expected
+
+  it 'replaces senstive info in string with [REDACTED]', ->
+    object =
+      a: 'Error: something went wrong'
+      b: 'Error: Username 12345@example.com was taken'
+      c: 'username 12345@example.com was taken'
+      d: 'Error: Username 12345@example.com'
+      e: 'Error: Username  =  12345@example.com'
+      f: 'Error: Username'
+
+    expected =
+      a: 'Error: something went wrong'
+      b: 'Error: [REDACTED] was taken'
+      c: '[REDACTED] was taken'
+      d: 'Error: [REDACTED]'
+      e: 'Error: [REDACTED]'
+      f: 'Error: Username'
+
+    assert.deepEqual (h.scrub object), expected
