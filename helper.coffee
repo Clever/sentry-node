@@ -7,7 +7,7 @@ module.exports =
 
     # ensure that if y is a substring of x, y comes AFTER x in this list
     # what about _csrf and csrfSecret, id
-    bads = ['api_key', 'client_id', 'client_secret', 'refresh_token', 'user_token', 'user_token_secret', 'password', 'secret', 'key', 'username', 'user', 'name', 'api']
+    bads = ['api_key', 'client_id', 'client_secret', 'refresh_token', 'user_token', 'user_token_secret', 'password', 'secret', 'key', 'username', 'user', 'api']
 
     object = _.deepToFlat object
 
@@ -21,6 +21,7 @@ module.exports =
     # for all the keys that are left, check their contents
     _.each (_.keys object), (key) ->
       i = object[key]
+      if _.isUndefined i then return
       _.each bads, (bad) ->
 
         # info can be encoded in the url in the form
