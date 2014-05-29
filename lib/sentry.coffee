@@ -58,9 +58,6 @@ module.exports = class Sentry extends events.EventEmitter
     unless @enabled
       return console.log @disable_message
 
-    unless process.env.NODE_ENV is 'production'
-      return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
-
     # data.logger must be a string else sentry fails quietly
     if data.logger? and not _.isString data.logger
       data.logger = "WARNING: logger not passed as string! #{JSON.stringify(data.logger)}"
