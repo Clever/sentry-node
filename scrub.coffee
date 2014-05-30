@@ -1,15 +1,14 @@
 _ = require 'underscore'
 _.mixin require 'underscore.deep'
 
-Scrub = (bads, fns) ->
-  bads = ['api_key', 'client_id', 'client_secret', 'refresh_token', 'user_token', 'user_token_secret',
-    'password', 'secret', 'key', 'username', 'user', 'api'] if bads is 'default'
+Scrub = (fns, bads) ->
   fns = [Scrubers.bad_keys, Scrubers.url_encode, Scrubers.plain_text] if fns is 'default'
 
   scrub = (object) ->
-    for fn in fns
-      object = fn bads, object
+    for fn,i in fns
+      object = fn (bads[i] or _.last bads), object
     return object
+
   return scrub
 
 Scrubers =

@@ -100,7 +100,7 @@ describe 'sentry-node', ->
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    scrubber = scrub_lib.Scrub ['password', 'user'], 'default'
+    scrubber = scrub_lib.Scrub 'default', [['password', 'user']]
     _sentry = new Sentry sentry_settings, scrubber
     _sentry.error new Error('Error message'), '/path/to/logger', 'culprit', {a:'a', b:'user name', password:'pwd'}
     scope.done()
@@ -184,7 +184,7 @@ describe 'sentry-node', ->
     @sentry.error new Error('Error message'), logger, "some culprit"
 
   it 'scrubs keys with banned names', ->
-    scrubber = scrub_lib.Scrub ['secret', 'password'], 'default'
+    scrubber = scrub_lib.Scrub 'default', [['secret', 'password']]
     object =
       a : 'non sensitive'
       b :
@@ -198,14 +198,14 @@ describe 'sentry-node', ->
     assert.deepEqual (scrubber object), expected
 
   it 'replaces sensitive url encoded info with [REDACTED]', ->
-    scrubber = scrub_lib.Scrub ['refresh_token', 'client_id', 'client_secret'], [scrub_lib.Scrubers.url_encode]
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.url_encode], [['refresh_token', 'client_id', 'client_secret']]
     object =
       url: 'refresh_token=1234567890asdfghjkl&CliENT_Id=123456789.apps.googleusercontent.com&client_secret=123456789asdfghjkl&grant_type=refresh_token'
     expected = {url: '[REDACTED]&[REDACTED].apps.googleusercontent.com&[REDACTED]&grant_type=refresh_token'}
     assert.deepEqual (scrubber object), expected
 
   it 'replaces senstive info in string with [REDACTED]', ->
-    scrubber = scrub_lib.Scrub ['username'], [scrub_lib.Scrubers.plain_text]
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.plain_text], [['username']]
     object =
       a: 'Error: something went wrong'
       b: 'Error: Username 12345@example.com was taken'
@@ -224,7 +224,7 @@ describe 'sentry-node', ->
     assert.deepEqual (scrubber object), expected
 
   it 'allows user defined functions', ->
-    scrubber = scrub_lib.Scrub ['these', 'arent', 'used'], [user_scrub.scrub]
+    scrubber = scrub_lib.Scrub [user_scrub.scrub], [['these', 'arent', 'used']]
     object =
       a: 'good'
       omit_this_key: 'bad'
