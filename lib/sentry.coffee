@@ -4,7 +4,6 @@ nodeurl = require 'url'
 quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
-h = require ("#{__dirname}/../helper")
 
 parseDSN = (dsn) =>
   parsed = nodeurl.parse(dsn)
@@ -20,7 +19,7 @@ parseDSN = (dsn) =>
 module.exports = class Sentry extends events.EventEmitter
 
   # constructor must be provided a credentials string or object
-  constructor: (credentials) ->
+  constructor: (credentials, scrubber) ->
     @enabled = false
     credentials = parseDSN credentials if _.isString credentials
     if not _.isObject credentials
@@ -34,6 +33,9 @@ module.exports = class Sentry extends events.EventEmitter
     _.defaults @,
       hostname: os.hostname()
       enable_env: ['production']
+
+
+    @scrubber = scrubber if scrubber?
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
@@ -74,7 +76,7 @@ module.exports = class Sentry extends events.EventEmitter
       method: 'post'
       headers:
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node"
-      json: h.scrub data
+      json: if @scrubber? then @scrubber data else data
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
         console.error 'Error posting event to Sentry:', err, body
