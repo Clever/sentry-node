@@ -13,7 +13,6 @@ Scrub = (bads, fns) ->
   return scrub
 
 Scrubers =
-
   bad_keys: (bads, object) ->
     object = _.deepToFlat object
     _.each (_.keys object), (key) ->

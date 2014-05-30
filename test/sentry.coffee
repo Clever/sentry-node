@@ -94,16 +94,15 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
-          if params.extra?.stacktrace?
-            if not params.extra?.password
-              return 'error'
+          if params.extra?.stacktrace? and not params.extra.password and params.extra.b is '[REDACTED]'
+            return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
-    scrubber = scrub_lib.Scrub 'default', 'default'
+    scrubber = scrub_lib.Scrub ['password', 'user'], 'default'
     _sentry = new Sentry sentry_settings, scrubber
-    _sentry.error new Error('Error message'), '/path/to/logger', 'culprit', {a:'a', password:'pwd'}
+    _sentry.error new Error('Error message'), '/path/to/logger', 'culprit', {a:'a', b:'user name', password:'pwd'}
     scope.done()
 
 
