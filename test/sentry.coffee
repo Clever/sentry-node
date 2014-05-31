@@ -5,7 +5,8 @@ nock = require 'nock'
 
 Sentry = require("#{__dirname}/../lib/sentry")
 sentry_settings = require("#{__dirname}/credentials").sentry
-h = require ("#{__dirname}/../helper")
+scrub_lib = require ("#{__dirname}/../scrub")
+user_scrub = require("#{__dirname}/lib/user_scrubber")
 
 
 describe 'sentry-node', ->
@@ -74,8 +75,7 @@ describe 'sentry-node', ->
 
   it 'send error correctly', ->
     scope = nock('https://app.getsentry.com')
-      .matchHeader('X-Sentry-Auth'
-      , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .matchHeader('X-Sentry-Auth', "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
@@ -87,6 +87,24 @@ describe 'sentry-node', ->
 
     @sentry.error new Error('Error message'), '/path/to/logger', 'culprit'
     scope.done()
+
+  it 'send error correctly with filtering', ->
+    scope = nock('https://app.getsentry.com')
+      .matchHeader('X-Sentry-Auth', "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .filteringRequestBody (path) ->
+        params = JSON.parse path
+        if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
+          if params.extra?.stacktrace? and not params.extra.password and params.extra.b is '[REDACTED]'
+            return 'error'
+        throw Error 'Body of Sentry error request is incorrect.'
+      .post("/api/#{sentry_settings.project_id}/store/", 'error')
+      .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
+
+    scrubber = scrub_lib.Scrub 'default', [['password', 'user']]
+    _sentry = new Sentry sentry_settings, scrubber
+    _sentry.error new Error('Error message'), '/path/to/logger', 'culprit', {a:'a', b:'user name', password:'pwd'}
+    scope.done()
+
 
   it 'send error correctly when culprit not defined', ->
     scope = nock('https://app.getsentry.com')
@@ -166,6 +184,7 @@ describe 'sentry-node', ->
     @sentry.error new Error('Error message'), logger, "some culprit"
 
   it 'scrubs keys with banned names', ->
+    scrubber = scrub_lib.Scrub 'default', [['secret', 'password']]
     object =
       a : 'non sensitive'
       b :
@@ -176,15 +195,17 @@ describe 'sentry-node', ->
         api: 'qwerty'
 
     expected = {a: 'non sensitive', b : {d: 'non sensitive'}}
-    assert.deepEqual (h.scrub object), expected
+    assert.deepEqual (scrubber object), expected
 
   it 'replaces sensitive url encoded info with [REDACTED]', ->
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.url_encode], [['refresh_token', 'client_id', 'client_secret']]
     object =
       url: 'refresh_token=1234567890asdfghjkl&CliENT_Id=123456789.apps.googleusercontent.com&client_secret=123456789asdfghjkl&grant_type=refresh_token'
     expected = {url: '[REDACTED]&[REDACTED].apps.googleusercontent.com&[REDACTED]&grant_type=refresh_token'}
-    assert.deepEqual (h.scrub object), expected
+    assert.deepEqual (scrubber object), expected
 
   it 'replaces senstive info in string with [REDACTED]', ->
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.plain_text], [['username']]
     object =
       a: 'Error: something went wrong'
       b: 'Error: Username 12345@example.com was taken'
@@ -200,5 +221,13 @@ describe 'sentry-node', ->
       d: 'Error: [REDACTED]'
       e: 'Error: [REDACTED]'
       f: 'Error: Username'
+    assert.deepEqual (scrubber object), expected
 
-    assert.deepEqual (h.scrub object), expected
+  it 'allows user defined functions', ->
+    scrubber = scrub_lib.Scrub [user_scrub.scrub], [['these', 'arent', 'used']]
+    object =
+      a: 'good'
+      omit_this_key: 'bad'
+    expected =
+      a: 'good'
+    assert.deepEqual (scrubber object), expected
