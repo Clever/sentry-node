@@ -5,6 +5,8 @@ nock = require 'nock'
 
 Sentry = require("#{__dirname}/../lib/sentry")
 sentry_settings = require("#{__dirname}/credentials").sentry
+scrub_lib = require ("#{__dirname}/../scrub")
+user_scrub = require("#{__dirname}/lib/user_scrubber")
 
 
 describe 'sentry-node', ->
@@ -73,8 +75,7 @@ describe 'sentry-node', ->
 
   it 'send error correctly', ->
     scope = nock('https://app.getsentry.com')
-      .matchHeader('X-Sentry-Auth'
-      , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .matchHeader('X-Sentry-Auth', "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
