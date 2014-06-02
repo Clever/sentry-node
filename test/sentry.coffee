@@ -184,7 +184,7 @@ describe 'sentry-node', ->
     @sentry.error new Error('Error message'), logger, "some culprit"
 
   it 'scrubs keys with banned names', ->
-    scrubber = scrub_lib.Scrub 'default', [['secret', 'password']]
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.bad_keys], [['secret', 'password']]
     object =
       a : 'non sensitive'
       b :
