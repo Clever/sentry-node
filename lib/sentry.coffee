@@ -5,16 +5,14 @@ quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
 
-parseDSN = (dsn) =>
-  parsed = nodeurl.parse(dsn)
+parseDSN = (dsn) ->
   try
-    credentials =
-      project_id: parsed.path.split('/')[1]
-      key: parsed.auth.split(':')[0]
-      secret: parsed.auth.split(':')[1]
+    {auth, pathname} = nodeurl.parse dsn
+    [key, secret] = auth.split ':'
+    project_id = pathname.split('/')[1]
+    {key, secret, project_id}
   catch err
-    credentials = {}
-  return credentials
+    {}
 
 module.exports = class Sentry extends events.EventEmitter
 
@@ -29,8 +27,7 @@ module.exports = class Sentry extends events.EventEmitter
     else
       @disable_message = "Credentials you passed in aren't complete."
 
-    _.defaults @,
-      hostname: os.hostname()
+    _.defaults @, hostname: os.hostname()
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
