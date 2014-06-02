@@ -197,6 +197,19 @@ describe 'sentry-node', ->
     expected = {a: 'non sensitive', b : {d: 'non sensitive'}}
     assert.deepEqual (scrubber object), expected
 
+  it 'scrubs banned values', ->
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.bad_vals], [['thisIsOurApiKey']]
+    object =
+      a: 'a string of text contains thisIsOurApiKey'
+      b: 'a string of text contains thisisoutapikey'
+      c: 'a normal string'
+    expected =
+      a: 'a string of text contains [REDACTED]'
+      b: 'a string of text contains thisisoutapikey'
+      c: 'a normal string'
+    assert.deepEqual (scrubber object), expected
+
+
   it 'replaces sensitive url encoded info with [REDACTED]', ->
     scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.url_encode], [['refresh_token', 'client_id', 'client_secret']]
     object =
@@ -230,4 +243,19 @@ describe 'sentry-node', ->
       omit_this_key: 'bad'
     expected =
       a: 'good'
+    assert.deepEqual (scrubber object), expected
+
+  it 'allows different illegal words for different functions', ->
+    scrubber = scrub_lib.Scrub [scrub_lib.Scrubers.bad_keys, scrub_lib.Scrubers.url_encode, scrub_lib.Scrubers.plain_text], [['user'], ['id']]
+    object =
+      user: 'name'
+      id: 'number'
+      a: 'user'
+      b: 'id 123456'
+      c: 'someurl?id=12345&user=name'
+    expected =
+      id: 'number'
+      a: 'user'
+      b: '[REDACTED]'
+      c: 'someurl?[REDACTED]&user=name'
     assert.deepEqual (scrubber object), expected

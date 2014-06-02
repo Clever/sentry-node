@@ -38,6 +38,7 @@ Scrubers =
       object[key] = i
     return _.deepFromFlat object
 
+  # If plain text and url_encode share bads, plain text should be called after url_encode
   plain_text: (bads, object) ->
     object = _.deepToFlat object
     _.each (_.keys object), (key) ->
@@ -56,6 +57,13 @@ Scrubers =
           e = if end3 > end2 and end2 > end1 and end1 > start then i[end3..] else ''
           i = s + e
       object[key] = i
+    return _.deepFromFlat object
+
+  bad_vals: (bads, object) ->
+    object = _.deepToFlat object
+    _.each (_.keys object), (key) ->
+      _.each bads, (bad) ->
+        object[key] = object[key].replace (bad), '[REDACTED]'
     return _.deepFromFlat object
 
 module.exports = {Scrub, Scrubers}
