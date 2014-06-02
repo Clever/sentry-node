@@ -29,7 +29,8 @@ module.exports = class Sentry extends events.EventEmitter
     else
       @disable_message = "Credentials you passed in aren't complete."
 
-    @hostname = os.hostname()
+    _.defaults @,
+      hostname: os.hostname()
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
