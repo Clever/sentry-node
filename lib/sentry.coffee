@@ -5,20 +5,17 @@ quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
 
-parseDSN = (dsn) =>
-  parsed = nodeurl.parse(dsn)
+parseDSN = (dsn) ->
   try
-    data =
-      project_id: parsed.path.split('/')[1]
-      key: parsed.auth.split(':')[0]
-      secret: parsed.auth.split(':')[1]
+    {auth, pathname} = nodeurl.parse dsn
+    [key, secret] = auth.split ':'
+    project_id = pathname.split('/')[1]
+    {key, secret, project_id}
   catch err
-    data = {}
-  return data
+    {}
 
 module.exports = class Sentry extends events.EventEmitter
 
-  # constructor must be provided a credentials string or object
   constructor: (credentials) ->
     @enabled = false
     credentials = parseDSN credentials if _.isString credentials
@@ -30,9 +27,7 @@ module.exports = class Sentry extends events.EventEmitter
     else
       @disable_message = "Credentials you passed in aren't complete."
 
-    _.defaults @,
-      hostname: os.hostname()
-      enable_env: ['production']
+    _.defaults @, hostname: os.hostname()
 
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
@@ -59,9 +54,6 @@ module.exports = class Sentry extends events.EventEmitter
   _send: (data) =>
     unless @enabled
       return console.log @disable_message
-
-    unless process.env.NODE_ENV in @enable_env
-      return console.log "If #{process.env.NODE_ENV} was enabled, would have sent to Sentry:", data
 
     # data.logger must be a string else sentry fails quietly
     if data.logger? and not _.isString data.logger
