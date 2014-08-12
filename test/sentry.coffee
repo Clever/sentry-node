@@ -59,7 +59,7 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
-          if params.extra?.stacktrace? and params.message.indexOf('WARNING: err') != -1
+          if params.message.indexOf('WARNING: err') != -1
             return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
@@ -75,8 +75,7 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['culprit','message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
-          if params.extra?.stacktrace?
-            return 'error'
+          return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
@@ -91,13 +90,29 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['message','logger','server_name','platform','level'], (prop) -> _.has(params, prop))
-          if params.extra?.stacktrace?
-            return 'error'
+          return 'error'
         throw Error 'Body of Sentry error request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'error')
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
     @sentry.error new Error('Error message'), '/path/to/logger', null
+    scope.done()
+
+  it 'send error correctly if there are circular references in "extra"', ->
+    scope = nock('https://app.getsentry.com')
+      .matchHeader('X-Sentry-Auth'
+      , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
+      .filteringRequestBody (path) ->
+        params = JSON.parse path
+        if _.every(['culprit','message','logger','server_name','platform','level','extra'], (prop) -> _.has(params, prop))
+          return 'error'
+        throw Error 'Body of Sentry error request is incorrect.'
+      .post("/api/#{sentry_settings.project_id}/store/", 'error')
+      .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
+
+    extra = {foo: 'bar'}
+    extra = _.extend extra, {circular: extra}
+    @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
     scope.done()
 
   it 'send message correctly', ->
