@@ -17,6 +17,9 @@ describe 'sentry-node', ->
   # mock sentry dsn with random uuid as public_key and secret_key
   dsn = 'https://1234567890abcdef:fedcba0987654321@app.getsentry.com/12345'
 
+  beforeEach -> @scope = null
+  afterEach -> @scope?.done()
+
   it 'setup sentry client from specified DSN correctly', ->
     _sentry = new Sentry dsn
     assert.equal _sentry.key, '1234567890abcdef'
@@ -53,7 +56,7 @@ describe 'sentry-node', ->
     assert.equal _sentry.disable_message, "Credentials you passed in aren't complete."
 
   it 'warns if passed an error that isnt an instance of Error', ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
@@ -66,10 +69,9 @@ describe 'sentry-node', ->
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
     @sentry.error 'not an Error', 'path/to/logger', 'culprit'
-    scope.done()
 
   it 'send error correctly', ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
@@ -81,10 +83,9 @@ describe 'sentry-node', ->
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
     @sentry.error new Error('Error message'), '/path/to/logger', 'culprit'
-    scope.done()
 
   it 'send error correctly when culprit not defined', ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
@@ -96,10 +97,9 @@ describe 'sentry-node', ->
       .reply(200, {"id": "534f9b1b491241b28ee8d6b571e1999d"}) # mock sentry response with a random uuid
 
     @sentry.error new Error('Error message'), '/path/to/logger', null
-    scope.done()
 
   it 'send error correctly if there are circular references in "extra"', ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
@@ -113,10 +113,9 @@ describe 'sentry-node', ->
     extra = {foo: 'bar'}
     extra = _.extend extra, {circular: extra}
     @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
-    scope.done()
 
   it 'send message correctly', ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
       .filteringRequestBody (path) ->
@@ -129,43 +128,36 @@ describe 'sentry-node', ->
       .reply(200, {"id": "c3115249083246efa839cfac2abbdefb"}) # mock sentry response with a random uuid
 
     @sentry.message 'message', '/path/to/logger'
-    scope.done()
 
   it 'emit logged event when successfully made an api call', (done) ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .filteringRequestBody(/.*/, '*')
       .post("/api/#{sentry_settings.project_id}/store/", '*')
       .reply(200, 'OK')
 
-    @sentry.on 'logged', ->
-      scope.done()
-      done()
+    @sentry.on 'logged', -> done()
 
     @sentry.error new Error('wtf?'), "Unknown Error", "/"
 
   it 'emit error event when the api call returned an error', (done) ->
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .filteringRequestBody(/.*/, '*')
       .post("/api/#{sentry_settings.project_id}/store/", '*')
       .reply(500, 'Oops!', {'x-sentry-error': 'Oops!'})
 
-    @sentry.once 'error', (err) ->
-      scope.done()
-      done()
+    @sentry.once 'error', (err) -> done()
 
     @sentry.message "hey!", "/"
 
   it 'one time listener should work correctly', (done) ->
     _sentry = new Sentry(sentry_settings)
 
-    scope = nock('https://app.getsentry.com')
+    @scope = nock('https://app.getsentry.com')
       .filteringRequestBody(/.*/, '*')
       .post("/api/#{sentry_settings.project_id}/store/", '*')
       .reply(500, 'Oops!', {'x-sentry-error': 'Oops!'})
 
-    _sentry.once 'error', ->
-      scope.done()
-      done()
+    _sentry.once 'error', -> done()
 
     _sentry.message "hey!", "/"
 
