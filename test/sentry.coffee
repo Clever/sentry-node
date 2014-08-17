@@ -98,7 +98,7 @@ describe 'sentry-node', ->
 
     @sentry.error new Error('Error message'), '/path/to/logger', null
 
-  it 'send error correctly if there are circular references in "extra"', ->
+  it 'send error correctly if there are circular references in "extra"', (done) ->
     @scope = nock('https://app.getsentry.com')
       .matchHeader('X-Sentry-Auth'
       , "Sentry sentry_version=4, sentry_key=#{sentry_settings.key}, sentry_secret=#{sentry_settings.secret}, sentry_client=sentry-node")
@@ -112,6 +112,11 @@ describe 'sentry-node', ->
 
     extra = {foo: 'bar'}
     extra = _.extend extra, {circular: extra}
+
+    @sentry.once 'warning', (err) ->
+      assert.equal err.message, "WARNING: extra not parseable to JSON!"
+      done()
+
     @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
 
   it 'send message correctly', ->
@@ -121,7 +126,7 @@ describe 'sentry-node', ->
       .filteringRequestBody (path) ->
         params = JSON.parse path
         if _.every(['message','logger','level'], (prop) -> _.has(params, prop))
-          unless _.some(['culprit','server_name','platform','extra'], (prop) -> _.has(params, prop))
+          unless _.some(['culprit','server_name','platform'], (prop) -> _.has(params, prop))
             return 'message'
         throw Error 'Body of Sentry message request is incorrect.'
       .post("/api/#{sentry_settings.project_id}/store/", 'message')

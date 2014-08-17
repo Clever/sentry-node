@@ -33,22 +33,23 @@ module.exports = class Sentry extends events.EventEmitter
     unless err instanceof Error
       err = new Error "WARNING: err not passed as Error! #{JSON.stringify(err, null, 2)}"
       @emit 'warning', new Error err
+
     data =
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
       logger: logger
       server_name: @hostname
       platform: 'node'
       level: 'error'
-      extra: util.inspect _.extend(extra, {stacktrace: err.stack}), {depth: null}
+      extra: _.extend extra, {stacktrace: err.stack}
     _.extend data, culprit: culprit if not _.isNull culprit
     @_send data
 
-  message: (message, logger, extra) =>
+  message: (message, logger, extra={}) =>
     data =
       message: message
       logger: logger
       level: 'info'
-      extra: extra if extra?
+      extra: extra
     @_send data
 
   _send: (data) =>
@@ -59,6 +60,10 @@ module.exports = class Sentry extends events.EventEmitter
     if data.logger? and not _.isString data.logger
       data.logger = "WARNING: logger not passed as string! #{JSON.stringify(data.logger)}"
       @emit 'warning', new Error data.logger
+
+    try JSON.stringify(data.extra) catch
+      @emit 'warning', new Error "WARNING: extra not parseable to JSON!"
+      data.extra = serialized: util.inspect data.extra, {depth: null}
 
     options =
       uri: "https://app.getsentry.com/api/#{@project_id}/store/"
