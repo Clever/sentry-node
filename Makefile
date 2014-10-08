@@ -4,7 +4,7 @@
 # `make test` runs all the tests
 # `make test/each.coffee` runs just that test
 .PHONY: test test-cov
-TESTS=$(shell cd test && ls *.coffee | sed s/\.coffee$$//)
+TESTS=$(shell cd test && ls *.coffee | sed s/\.coffee$$// | grep -v credentials)
 LIBS=$(shell find . -regex "^./lib\/.*\.coffee\$$" | sed s/\.coffee$$/\.js/ | sed s/lib/lib-js/)
 
 build: $(LIBS)
