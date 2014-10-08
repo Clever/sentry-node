@@ -32,7 +32,7 @@ module.exports = class Sentry extends events.EventEmitter
   error: (err, logger, culprit, extra = {}) =>
     unless err instanceof Error
       err = new Error "WARNING: err not passed as Error! #{JSON.stringify(err, null, 2)}"
-      @emit 'warning', new Error err
+      @emit 'warning', err
 
     data =
       message: err.message # smaller text that appears right under culprit (and shows up in HipChat)
@@ -73,7 +73,11 @@ module.exports = class Sentry extends events.EventEmitter
       json: data
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
+        return @_handle_http_429 err if res.statusCode == 429
         console.error 'Error posting event to Sentry:', err, body
         @emit("error", err)
       else
         @emit("logged")
+
+  _handle_http_429: (err) =>
+    @emit "warning", err
