@@ -75,12 +75,12 @@ describe 'Sentry', ->
       assert @sentry._send.calledOnce
 
       send_data = @sentry._send.getCall(0).args[0]
-      assert err_message == send_data.message, "Unexpected message. Expected '#{err_message}', Received '#{send_data.message}'"
-      assert logger == send_data.logger, "Unexpected logger. Expected '#{logger}', Received '#{send_data.logger}'"
+      assert.equal err_message, send_data.message, "Unexpected message. Expected '#{err_message}', Received '#{send_data.message}'"
+      assert.equal logger, send_data.logger, "Unexpected logger. Expected '#{logger}', Received '#{send_data.logger}'"
       assert !_.isUndefined send_data.server_name, "Expected a value to be set for server_name, undefined given"
-      assert culprit == send_data.culprit, "Unexpected culprit. Expected '#{culprit}', Received '#{send_data.culprit}'"
-      assert 'node' == send_data.platform, "Unexpected platform. Expected 'node', Received '#{send_data.platform}'"
-      assert 'error' == send_data.level, "Unexpected level. Expected 'error', Received '#{send_data.level}'"
+      assert.equal culprit, send_data.culprit, "Unexpected culprit. Expected '#{culprit}', Received '#{send_data.culprit}'"
+      assert.equal 'node', send_data.platform, "Unexpected platform. Expected 'node', Received '#{send_data.platform}'"
+      assert.equal 'error', send_data.level, "Unexpected level. Expected 'error', Received '#{send_data.level}'"
 
     it 'will send error correctly when culprit is null', ->
       @sentry.error new Error('Error message'), '/path/to/logger', null
@@ -98,17 +98,18 @@ describe 'Sentry', ->
       assert @sentry._send.calledOnce
 
       send_data = @sentry._send.getCall(0).args[0]
-      assert 'message' == send_data.message, "Unexpected message. Expected 'message', Received '#{send_data.message}'"
-      assert '/path/to/logger' == send_data.logger, "Unexpected logger. Expected '/path/to/logger', Received '#{send_data.logger}'"
-      assert 'info' == send_data.level, "Unexpected level. Expected 'info', Received '#{send_data.level}'"
-
-  describe '#_handle_http_429', ->
-    it 'should have a function to handle http 429', ->
-      assert _.isFunction @sentry._handle_http_429, 'Expected Sentry to have fn _handle_http_429'
+      assert.equal 'message', send_data.message, "Unexpected message. Expected 'message', Received '#{send_data.message}'"
+      assert.equal '/path/to/logger', send_data.logger, "Unexpected logger. Expected '/path/to/logger', Received '#{send_data.logger}'"
+      assert.equal 'info', send_data.level, "Unexpected level. Expected 'info', Received '#{send_data.level}'"
 
   describe '#_send', ->
     beforeEach ->
       sinon.spy @sentry, '_handle_http_429'
+      # Mute errors, they should be tested for and expected
+      sinon.stub console , 'error'
+
+    afterEach ->
+      console.error.restore()
 
     it 'emit error event when the api call returned an error', (done) ->
       scope = nock('https://app.getsentry.com')
@@ -165,7 +166,7 @@ describe 'Sentry', ->
 
       @sentry._send get_mock_data
 
-    it 'sends error correctly if there are circular references in "extra"', (done) ->
+    it 'emits a warning if there are circular references in "extra", before sending', (done) ->
       scope = nock('https://app.getsentry.com')
         .filteringRequestBody(/.*/, '*')
         .post("/api/#{sentry_settings.project_id}/store/", '*')
@@ -174,29 +175,39 @@ describe 'Sentry', ->
       extra = {foo: 'bar'}
       extra = _.extend extra, {circular: extra}
 
-      # we have to wait for both to finish
-      warning_called = false
-      logged_called = false
-
       @sentry.once 'warning', (err) ->
         warning_called = true
         assert.equal err.message, "WARNING: extra not parseable to JSON!"
-        scope.done() if logged_called
-        done() if logged_called
+        assert !_.isEmpty(scope.pendingMocks())
+        done()
+
+      @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
+
+    it 'emits logged even if there are circular referances in "extra"', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+      extra = {foo: 'bar'}
+      extra = _.extend extra, {circular: extra}
 
       @sentry.once 'logged', ->
         logged_called = true
-        scope.done() if warning_called
-        done() if warning_called
+        scope.done()
+        done()
 
       @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
 
 
   describe '#_handle_http_429', ->
+    it 'exist as a function', ->
+      assert _.isFunction @sentry._handle_http_429, 'Expected Sentry to have fn _handle_http_429'
+
     it 'should emit a warning when invoked', (done) ->
       my_error = new Error 'Testing 429'
       @sentry.once 'warning', (err) ->
-        assert err == my_error
+        assert.equal err, my_error
         done()
 
       @sentry._handle_http_429 my_error

@@ -14,8 +14,8 @@ lib-js/%.js : lib/%.coffee
 
 test: $(TESTS)
 
-test-w: build
-	DEBUG=* NODE_ENV=test node_modules/mocha/bin/mocha --timeout 60000 -w --compilers coffee:coffee-script  test/
+test-w: 
+	NODE_ENV=test node_modules/mocha/bin/mocha --timeout 60000 -w --compilers coffee:coffee-script  test/
 
 $(TESTS): build
 	DEBUG=* NODE_ENV=test node_modules/mocha/bin/mocha --timeout 60000 --compilers coffee:coffee-script test/$@.coffee
