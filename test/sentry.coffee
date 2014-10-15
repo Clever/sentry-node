@@ -5,6 +5,7 @@ nock = require 'nock'
 sinon = require 'sinon'
 
 Sentry = require("#{__dirname}/../lib/sentry")
+{_handle_http_429} = require("#{__dirname}/../lib/sentry")._private
 sentry_settings = require("#{__dirname}/credentials").sentry
 
 
@@ -12,10 +13,11 @@ describe 'Sentry', ->
 
   beforeEach ->
     @sentry = new Sentry sentry_settings
-    # because only in production env sentry api would make http request
-    process.env.NODE_ENV = 'production'
 
   describe 'constructor', ->
+    it 'should create an instance of Sentry', ->
+      assert.equal @sentry.constructor.name, 'Sentry'
+
     it 'setup sentry client from specified DSN correctly', ->
       key = '1234567890abcdef'
       secret = 'fedcba0987654321'
@@ -104,7 +106,6 @@ describe 'Sentry', ->
 
   describe '#_send', ->
     beforeEach ->
-      sinon.spy @sentry, '_handle_http_429'
       # Mute errors, they should be tested for and expected
       sinon.stub console , 'error'
 
@@ -129,12 +130,12 @@ describe 'Sentry', ->
         .post("/api/#{sentry_settings.project_id}/store/", '*')
         .reply(200, 'OK')
 
-      @sentry.on 'logged', -> 
-      done()
+      @sentry.on 'logged', ->
+        done()
 
       @sentry._send get_mock_data()
 
-    it 'converts the logger to a string if you pass it a non string logger', (done) ->
+    it 'emits a warning if you pass a non string logger', (done) ->
       scope = nock('https://app.getsentry.com')
         .filteringRequestBody(/.*/, '*')
         .post("/api/#{sentry_settings.project_id}/store/", '*')
@@ -143,6 +144,20 @@ describe 'Sentry', ->
       logger = key: '/path/to/logger'
       @sentry.once 'warning', (err) ->
         assert.equal err.message, "WARNING: logger not passed as string! #{JSON.stringify(logger)}"
+        done()
+
+      data = get_mock_data()
+      data.logger = logger
+
+      @sentry._send data
+
+    it 'emits a logged event once logged', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+      logger = key: '/path/to/logger'
 
       @sentry.once 'logged', ->
         scope.done()
@@ -152,19 +167,6 @@ describe 'Sentry', ->
       data.logger = logger
 
       @sentry._send data
-
-    it 'should call _handle_http_429 on a HTTP 429', (done) ->
-      scope = nock('https://app.getsentry.com')
-        .post("/api/#{sentry_settings.project_id}/store/")
-        .reply(429, 'Too Many Requests', {'x-sentry-error': 'Too Many Requests'})
-
-      sentry_ref = @sentry
-      @sentry.on 'warning', ->
-        assert sentry_ref._handle_http_429.calledOnce
-        scope.done()
-        done()
-
-      @sentry._send get_mock_data
 
     it 'emits a warning if there are circular references in "extra", before sending', (done) ->
       scope = nock('https://app.getsentry.com')
@@ -176,7 +178,6 @@ describe 'Sentry', ->
       extra = _.extend extra, {circular: extra}
 
       @sentry.once 'warning', (err) ->
-        warning_called = true
         assert.equal err.message, "WARNING: extra not parseable to JSON!"
         assert !_.isEmpty(scope.pendingMocks())
         done()
@@ -193,16 +194,15 @@ describe 'Sentry', ->
       extra = _.extend extra, {circular: extra}
 
       @sentry.once 'logged', ->
-        logged_called = true
         scope.done()
         done()
 
       @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
 
 
-  describe '#_handle_http_429', ->
-    it 'exist as a function', ->
-      assert _.isFunction @sentry._handle_http_429, 'Expected Sentry to have fn _handle_http_429'
+  describe 'private function _handle_http_429', ->
+    it 'exists as a function', ->
+      assert _.isFunction _handle_http_429, 'Expected Sentry to have fn _handle_http_429'
 
     it 'should emit a warning when invoked', (done) ->
       my_error = new Error 'Testing 429'
@@ -210,7 +210,7 @@ describe 'Sentry', ->
         assert.equal err, my_error
         done()
 
-      @sentry._handle_http_429 my_error
+      _handle_http_429 @sentry, my_error
 
   get_mock_data = ->
     err = new Error 'Testing sentry'
