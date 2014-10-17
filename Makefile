@@ -3,8 +3,8 @@
 # `make lib/transform/each.coffee` compiles just that file to lib-js
 # `make test` runs all the tests
 # `make test/each.coffee` runs just that test
-.PHONY: test test-cov
-TESTS=$(shell cd test && ls *.coffee | sed s/\.coffee$$//)
+.PHONY: test test-cov test-w
+TESTS=$(shell cd test && ls *.coffee | sed s/\.coffee$$// | grep -v credentials)
 LIBS=$(shell find . -regex "^./lib\/.*\.coffee\$$" | sed s/\.coffee$$/\.js/ | sed s/lib/lib-js/)
 
 build: $(LIBS)
@@ -13,6 +13,9 @@ lib-js/%.js : lib/%.coffee
 	node_modules/coffee-script/bin/coffee --bare -c -o $(@D) $(patsubst lib-js/%,lib/%,$(patsubst %.js,%.coffee,$@))
 
 test: $(TESTS)
+
+test-w: 
+	NODE_ENV=test node_modules/mocha/bin/mocha --timeout 60000 -w --compilers coffee:coffee-script  test/
 
 $(TESTS): build
 	DEBUG=* NODE_ENV=test node_modules/mocha/bin/mocha --timeout 60000 --compilers coffee:coffee-script test/$@.coffee

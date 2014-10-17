@@ -1,6 +1,6 @@
 {
   "name": "sentry-node",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "simple Node wrapper around Sentry API",
   "engines": {
     "node": ">=0.10.x"
@@ -32,8 +32,9 @@
     "debug": "~0.7.4"
   },
   "devDependencies": {
-    "mocha": "~1.14.0",
     "coffee-script": "~1.6.3",
-    "nock": "~0.23.0"
+    "mocha": "~1.14.0",
+    "nock": "~0.23.0",
+    "sinon": "^1.10.3"
   }
 }
