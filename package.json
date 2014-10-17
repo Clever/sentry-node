@@ -1,6 +1,6 @@
 {
   "name": "sentry-node",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "simple Node wrapper around Sentry API",
   "engines": {
     "node": ">=0.10.x"
