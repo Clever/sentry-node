@@ -98,7 +98,9 @@ The Sentry client emits three events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
-- `'warning'`: emitted when a value of the incorrect type is passed as err or logger
+- `'warning'`: 
+    * emitted when a value of the incorrect type is passed as err or logger
+    * emitted when a HTTP 429 (burst rate limiting) is returned from Sentry API
 
 ```javascript
 sentry.on('logged', function(){
@@ -108,8 +110,8 @@ sentry.on('error', function(e){
   console.log('oh well, Sentry is broke.');
   console.log(e);
 })
-sentry.on('warning', function(){
-  console.log('You did something sentry didn't expect');
+sentry.on('warning', function(e){
+  console.log('You did something sentry didn't expect', e);
 })
 ```
 
