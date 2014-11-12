@@ -92,6 +92,27 @@ sentry.message(
 * **logger:** the place where the error was detected
 * **extra:** (optional) an object that gives more context about the message
 
+### Wrapper
+Wrapper can be used to wrap an async function, which will attempt to log any error's passed to the async function's callback with sentry.
+
+```javascript
+sentry.wrapper(logger, timeout).wrap(some_async_func);
+```
+
+### sample
+
+```javascript
+wrapped = sentry.wrapper('logger', 1000).wrap(function(callback){
+    callback(new Error('error to be logged'));
+});
+wrapped();
+```
+
+### arguments
+
+* **logger:** value used as the logger argument to sentry.error
+* **timeout:** (optional) the timeout (in ms) to wait for sentry to log error.  If timeout is exceeded, wrapped async function's callback will return a sentry timeout error.
+
 ## Events
 
 The Sentry client emits three events that you can listen to:
