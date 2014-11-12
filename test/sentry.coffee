@@ -87,7 +87,7 @@ describe 'Sentry', ->
     it 'will send error correctly when culprit is null', ->
       @sentry.error new Error('Error message'), '/path/to/logger', null
       send_data = @sentry._send.getCall(0).args[0]
-      
+
       assert _.isUndefined(send_data.culprit)
 
   describe '#message', ->
@@ -118,7 +118,7 @@ describe 'Sentry', ->
         .post("/api/#{sentry_settings.project_id}/store/", '*')
         .reply(500, 'Oops!', {'x-sentry-error': 'Oops!'})
 
-      @sentry.once 'error', (err) -> 
+      @sentry.once 'error', (err) ->
         scope.done()
         done()
 
@@ -211,6 +211,122 @@ describe 'Sentry', ->
         done()
 
       _handle_http_429 @sentry, my_error
+
+  describe 'wrapper with sentry disabled', ->
+    beforeEach ->
+      sinon.spy @sentry, 'error'
+      @sentry.enabled = false
+
+    it 'calls the given fn normally if sentry is disabled', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      args = [1, 'two', [3]]
+      expected = [null, {'4'}, 5, 'six']
+      fn = sinon.stub().yields expected...
+      wrapper.wrap(fn) args..., (results...) =>
+        assert not @sentry.error.called, 'Expected sentry.error to not be called'
+        assert.deepEqual results, expected
+        assert fn.calledOnce, 'Expected fn to be called exactly once'
+        assert.deepEqual fn.firstCall.args[...-1], args # strip off callback
+        done()
+
+  describe 'wrapper with sentry enabled', ->
+    beforeEach ->
+      sinon.spy @sentry, 'error'
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+    afterEach ->
+      @scope.done()
+
+    it 'calls the given fn with its args and passes through the results', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      args = [1, 'two', [3]]
+      expected = [null, {'4'}, 5, 'six']
+      fn = sinon.stub().yields expected...
+      wrapper.wrap(fn) args..., (results...) ->
+        assert.deepEqual results, expected
+        assert fn.calledOnce, 'Expected fn to be called exactly once'
+        assert.deepEqual fn.firstCall.args[...-1], args # strip off callback
+        done()
+
+    it 'sends to Sentry if the given function produces an error', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      expected_err = new Error 'oops'
+      expected_args = [1, 'two', [3]]
+      wrapper.wrap((args..., cb) -> setImmediate -> cb expected_err) expected_args..., (err) =>
+        assert.deepEqual err, expected_err
+        assert @sentry.error.calledOnce, 'Expected sentry.error to be called exactly once'
+
+        assert.deepEqual @sentry.error.firstCall.args[0..2],
+          [expected_err, 'logger', null]
+        # The 'extra' param should have the args the function was called with
+        assert.deepEqual @sentry.error.firstCall.args[3].args, expected_args
+        done()
+
+    it 'doesnt send to Sentry if the given function produces no error', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      wrapper.wrap((cb) -> setImmediate -> cb null) (err) =>
+        assert.deepEqual err, null
+        assert not @sentry.error.called, 'Expected sentry.error to not be called'
+        done()
+
+    it 'only calls the cb with no error once sentry-node emits a "logged" event', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      cb = sinon.spy()
+      wrapper.wrap((cb) -> cb new Error 'oops') cb
+      assert not cb.called, 'Expected cb to not be called before event'
+      @sentry.once 'logged', ->
+        assert cb.calledOnce, 'Expected cb to be called after logged event'
+        done()
+      @sentry.emit 'logged'
+
+    it 'calls the cb with an error if sentry-node emits an "error" event', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      cb = sinon.spy()
+      original_error = new Error 'oops'
+      sentry_error = new Error 'sentry failed'
+      wrapper.wrap((cb) -> cb original_error) cb
+      assert not cb.called, 'Expected cb to not be called before event'
+      @sentry.once 'error', ->
+        assert cb.calledOnce, 'Expected cb to be called after error event'
+        assert.deepEqual cb.firstCall.args, [_.extend sentry_error, {original_error}]
+        done()
+      @sentry.emit 'error', sentry_error
+
+  describe 'wrapper with timeout set', ->
+    beforeEach ->
+      sinon.stub @sentry, 'error'
+
+    TIMEOUT = 10
+
+    it 'calls the cb with an error if sentry-node doesnt emit any event', (done) ->
+      wrapper = @sentry.wrapper 'logger', TIMEOUT
+      cb = sinon.spy()
+      original_error = new Error 'oops'
+      timeout_error = new Error 'Sentry timed out'
+      wrapper.wrap((cb) -> cb original_error) cb
+      assert not cb.called, 'Expected cb to not be called before timeout'
+      setTimeout ->
+        assert cb.calledOnce, 'Expected cb to be called after timeout'
+        assert.deepEqual cb.firstCall.args, [_.extend timeout_error, {original_error}]
+        done()
+      , TIMEOUT + 1
+
+    it 'calls the cb with an error if sentry-node doesnt emit an event quickly enough', (done) ->
+      wrapper = @sentry.wrapper 'logger', TIMEOUT
+      cb = sinon.spy()
+      original_error = new Error 'oops'
+      timeout_error = new Error 'Sentry timed out'
+      wrapper.wrap((cb) -> cb original_error) cb
+      assert not cb.called, 'Expected cb to not be called before timeout'
+      setTimeout (=> @sentry.emit 'logged'), TIMEOUT + 1
+      setTimeout ->
+        assert cb.calledOnce, 'Expected cb to be called exactly once after timeout'
+        assert.deepEqual cb.firstCall.args, [_.extend timeout_error, {original_error}]
+        done()
+      , TIMEOUT + 2
 
   get_mock_data = ->
     err = new Error 'Testing sentry'
