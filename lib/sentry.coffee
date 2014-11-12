@@ -4,6 +4,7 @@ nodeurl = require 'url'
 quest   = require 'quest'
 util    = require 'util'
 events  = require 'events'
+scrub   = require('loofah').default()
 
 parseDSN = (dsn) ->
   try
@@ -16,6 +17,14 @@ parseDSN = (dsn) ->
 
 _handle_http_429 = (context, err) ->
   context.emit "warning", err
+
+# Takes an amount of time (in milliseconds) and a function and produces a function that calls the
+# given function with a timeout. If the given function doesn't call its callback within the
+# specified amount of time, the callback will be called with an error.
+with_timeout = (msecs, fn) -> (args..., cb) ->
+  cb = _.once cb
+  setTimeout (-> cb new Error 'Sentry timed out'), msecs
+  fn args..., (results...) -> cb results...
 
 module.exports = class Sentry extends events.EventEmitter
 
@@ -81,5 +90,26 @@ module.exports = class Sentry extends events.EventEmitter
         @emit("error", err)
       else
         @emit("logged")
+
+  wrapper: (logger, timeout = 5000) =>
+
+    log_to_sentry = with_timeout timeout, (err, extra, cb) =>
+      @once 'logged', -> cb()
+      @once 'error', (sentry_err) -> cb sentry_err
+      @error scrub(err), logger, null, scrub(extra)
+
+    # Takes a function and produces a function that calls the given function, sending any errors it
+    # produces to Sentry.
+    wrap:
+      if @enabled
+        (fn) -> (args..., cb) ->
+          fn args..., (err, results...) ->
+            if err?
+              log_to_sentry err, {args}, (sentry_err) ->
+                cb if sentry_err? then _.extend sentry_err, original_error: err else err
+            else
+              cb null, results...
+      else
+        (fn) -> fn
 
 module.exports._private = {_handle_http_429} if process.env.NODE_ENV is 'test'
