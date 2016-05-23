@@ -272,6 +272,21 @@ describe 'Sentry', ->
         assert not @sentry.error.called, 'Expected sentry.error to not be called'
         done()
 
+    it 'sends to Sentry if the given function produces an error and error is an object', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      expected_err = {err: new Error('oops'), extra: {hello: 'world'}}
+      expected_args = [1, 'two', [3]]
+      wrapper.wrap((args..., cb) -> setImmediate -> cb expected_err) expected_args..., (err) =>
+        assert.deepEqual err, expected_err.err
+        assert @sentry.error.calledOnce, 'Expected sentry.error to be called exactly once'
+
+        assert.deepEqual @sentry.error.firstCall.args[0..2],
+          [expected_err.err, 'logger', null]
+        # The 'extra' param should have the args the function was called with
+        assert.deepEqual @sentry.error.firstCall.args[3].args, expected_args
+        assert.deepEqual @sentry.error.firstCall.args[3].hello, 'world'
+        done()
+
     it 'only calls the cb with no error once sentry-node emits a "logged" event', (done) ->
       wrapper = @sentry.wrapper 'logger'
       cb = sinon.spy()

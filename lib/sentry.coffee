@@ -105,7 +105,12 @@ module.exports = class Sentry extends events.EventEmitter
         (fn) -> (args..., cb) ->
           fn args..., (err, results...) ->
             if err?
-              log_to_sentry err, {args}, (sentry_err) ->
+              extra = {args}
+              if _.isObject(err) and !(err instanceof Error)
+                extra = err.extra || {}
+                extra.args = args
+                err = err.err
+              log_to_sentry err, extra, (sentry_err) ->
                 cb if sentry_err? then _.extend sentry_err, original_error: err else err
             else
               cb null, results...
