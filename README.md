@@ -99,6 +99,15 @@ Wrapper can be used to wrap an async function, which will attempt to log any err
 sentry.wrapper(logger, timeout).wrap(some_async_func);
 ```
 
+When using wrapper, in case of an error, it's possible to pass extra context parameters by wrapping error in an object:
+```
+sentry_wrapper(logger, timeout).wrap(function(cb) {
+  if (some_error_case) {
+    cb({err: new Error("error has occured"), extra: {context: "some context information to be logged"}});
+  }
+});
+```
+
 ### sample
 
 ```javascript
