@@ -103,12 +103,18 @@ module.exports = class Sentry extends events.EventEmitter
     wrap:
       if @enabled
         (fn) -> (args..., cb) ->
-          fn args..., (err, results...) ->
+          ret = fn args..., (err, results...) ->
             if err?
               log_to_sentry err, {args}, (sentry_err) ->
                 cb if sentry_err? then _.extend sentry_err, original_error: err else err
             else
               cb null, results...
+          if ret && ret.then and ret.catch
+            ret.then (val) =>
+              cb null, val
+            .catch (err) =>
+              log_to_sentry err, {args}, (sentry_err) ->
+                cb if sentry_err? then _.extend sentry_err, original_error: err else err
       else
         (fn) -> fn
 
