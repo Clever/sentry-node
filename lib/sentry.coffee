@@ -100,16 +100,14 @@ module.exports = class Sentry extends events.EventEmitter
 
     # Takes a function and produces a function that calls the given function, sending any errors it
     # produces to Sentry.
+    globals: {}
     wrap:
       if @enabled
-        (fn) -> (args..., cb) ->
-          fn args..., (err, results...) ->
+        (fn) -> (args..., cb) =>
+          fn args..., (err, results...) =>
             if err?
-              extra = {args}
-              if _.isObject(err) and !(err instanceof Error)
-                extra = err.extra || {}
-                extra.args = args
-                err = err.err
+              extra = this.globals
+              extra.args = args
               log_to_sentry err, extra, (sentry_err) ->
                 cb if sentry_err? then _.extend sentry_err, original_error: err else err
             else
