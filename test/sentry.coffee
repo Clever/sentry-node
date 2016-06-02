@@ -3,6 +3,7 @@ assert = require 'assert'
 os = require 'os'
 nock = require 'nock'
 sinon = require 'sinon'
+Promise = require 'bluebird'
 
 Sentry = require("#{__dirname}/../lib/sentry")
 {_handle_http_429} = require("#{__dirname}/../lib/sentry")._private
@@ -345,6 +346,38 @@ describe 'Sentry', ->
         assert.deepEqual cb.firstCall.args, [_.extend timeout_error, {original_error}]
         done()
       , TIMEOUT + 2
+
+   describe 'wrapper with sentry enabled using promises', ->
+    beforeEach ->
+      sinon.spy @sentry, 'error'
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+    afterEach ->
+      @scope.done()
+
+    it 'sends to Sentry if the given function produces an error', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      expected_err = new Error 'oops'
+      expected_args = [1, 'two', [3]]
+      wrapper.wrap((args...) -> new Promise (resolve, reject) -> setImmediate -> reject(expected_err)) expected_args..., (err) =>
+        assert.deepEqual err, expected_err
+        assert @sentry.error.calledOnce, 'Expected sentry.error to be called exactly once'
+
+        assert.deepEqual @sentry.error.firstCall.args[0..2],
+          [expected_err, 'logger', null]
+        # The 'extra' param should have the args the function was called with
+        assert.deepEqual @sentry.error.firstCall.args[3].args, expected_args
+        done()
+
+    it 'doesnt send to Sentry if the given function produces no error', (done) ->
+      wrapper = @sentry.wrapper 'logger'
+      wrapper.wrap(-> new Promise (resolve, reject) -> setImmediate -> resolve(null)) (err) =>
+        assert.deepEqual err, null
+        assert not @sentry.error.called, 'Expected sentry.error to not be called'
+        done()
 
   get_mock_data = ->
     err = new Error 'Testing sentry'
