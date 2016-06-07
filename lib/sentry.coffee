@@ -15,7 +15,7 @@ parseDSN = (dsn) ->
   catch err
     {}
 
-_handle_http_429 = (context, err) ->
+_handle_http_load_errors = (context, err) ->
   context.emit "warning", err
 
 # Takes an amount of time (in milliseconds) and a function and produces a function that calls the
@@ -85,7 +85,7 @@ module.exports = class Sentry extends events.EventEmitter
       json: data
     quest options, (err, res, body) =>
       if err? or res.statusCode > 299
-        return _handle_http_429 @, err if res.statusCode is 429
+        return _handle_http_load_errors @, err if res.statusCode in [429, 413]
         console.error 'Error posting event to Sentry:', err, body
         @emit("error", err)
       else
@@ -121,4 +121,4 @@ module.exports = class Sentry extends events.EventEmitter
       else
         (fn) -> fn
 
-module.exports._private = {_handle_http_429} if process.env.NODE_ENV is 'test'
+module.exports._private = {_handle_http_load_errors} if process.env.NODE_ENV is 'test'

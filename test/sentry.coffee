@@ -6,7 +6,7 @@ sinon = require 'sinon'
 Promise = require 'bluebird'
 
 Sentry = require("#{__dirname}/../lib/sentry")
-{_handle_http_429} = require("#{__dirname}/../lib/sentry")._private
+{_handle_http_load_errors} = require("#{__dirname}/../lib/sentry")._private
 sentry_settings = require("#{__dirname}/credentials").sentry
 
 
@@ -201,17 +201,16 @@ describe 'Sentry', ->
       @sentry.error new Error('Error message'), '/path/to/logger', 'culprit', extra
 
 
-  describe 'private function _handle_http_429', ->
+  describe 'private function _handle_http_load_errors', ->
     it 'exists as a function', ->
-      assert _.isFunction _handle_http_429, 'Expected Sentry to have fn _handle_http_429'
+      assert _.isFunction _handle_http_load_errors, 'Expected Sentry to have fn _handle_http_load_errors'
 
-    it 'should emit a warning when invoked', (done) ->
-      my_error = new Error 'Testing 429'
+    it 'should emit a warning when invoked with error', (done) ->
+      my_error = new Error 'Testing error'
       @sentry.once 'warning', (err) ->
         assert.equal err, my_error
         done()
-
-      _handle_http_429 @sentry, my_error
+      _handle_http_load_errors @sentry, my_error
 
   describe 'wrapper with sentry disabled', ->
     beforeEach ->
