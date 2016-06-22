@@ -125,6 +125,55 @@ describe 'Sentry', ->
 
       @sentry.message "hey!", "/"
 
+    it 'calls callback when the api call returned an error', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(500, 'Oops!', {'x-sentry-error': 'Oops!'})
+
+      @sentry.once 'error', ->
+
+      @sentry.message "hey!", "/", {}, (err) ->
+        assert.equal err.message, "status code: 500"
+        scope.done()
+        done()
+
+    it 'emits done event when the api call returned an error', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(500, 'Oops!', {'x-sentry-error': 'Oops!'})
+
+      @sentry.once 'error', ->
+
+      @sentry.once 'done', ->
+        scope.done()
+        done()
+
+      @sentry.message "hey!", "/"
+
+    it 'calls callback when successfully made an api call', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+      @sentry.message "hey!", "/", {}, (err) ->
+        assert.ifError err
+        scope.done()
+        done()
+
+    it 'emits done event successfully made an api call', (done) ->
+      scope = nock('https://app.getsentry.com')
+        .filteringRequestBody(/.*/, '*')
+        .post("/api/#{sentry_settings.project_id}/store/", '*')
+        .reply(200, 'OK')
+
+      @sentry.once 'done', ->
+        scope.done()
+        done()
+      @sentry.message "hey!", "/"
+
     it 'emits logged event when successfully made an api call', (done) ->
       @scope = nock('https://app.getsentry.com')
         .filteringRequestBody(/.*/, '*')

@@ -41,7 +41,7 @@ module.exports = class Sentry extends events.EventEmitter
 
     _.defaults @, hostname: os.hostname()
 
-  error: (err, logger, culprit, extra = {}) =>
+  error: (err, logger, culprit, extra = {}, cb) =>
     unless err instanceof Error
       err = new Error "WARNING: err not passed as Error! #{JSON.stringify(err, null, 2)}"
       @emit 'warning', err
@@ -54,19 +54,24 @@ module.exports = class Sentry extends events.EventEmitter
       level: 'error'
       extra: _.extend extra, {stacktrace: err.stack}
     _.extend data, culprit: culprit if not _.isNull culprit
-    @_send data
+    @_send data, cb
 
-  message: (message, logger, extra={}) =>
+  message: (message, logger, extra={}, cb) =>
     data =
       message: message
       logger: logger
       level: 'info'
       extra: extra
-    @_send data
+    @_send data, cb
 
-  _send: (data) =>
+  _send: (data, cb) =>
+    unless cb?
+      cb = ->
+
     unless @enabled
-      return console.log @disable_message
+      @emit("done")
+      console.log @disable_message
+      return setImmediate cb
 
     # data.logger must be a string else sentry fails quietly
     if data.logger? and not _.isString data.logger
@@ -84,12 +89,17 @@ module.exports = class Sentry extends events.EventEmitter
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node"
       json: data
     quest options, (err, res, body) =>
+      @emit("done")
       if err? or res.statusCode > 299
-        return _handle_http_load_errors @, err if res.statusCode in [429, 413]
+        if res.statusCode in [429, 413]
+          _handle_http_load_errors @, err
+          return cb(err or new Error("status code: #{res.statusCode}"))
         console.error 'Error posting event to Sentry:', err, body
         @emit("error", err)
+        return cb(err or new Error("status code: #{res.statusCode}"))
       else
         @emit("logged")
+        return cb()
 
   wrapper: (logger, timeout = 5000) =>
 
