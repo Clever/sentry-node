@@ -90,13 +90,13 @@ module.exports = class Sentry extends events.EventEmitter
       json: data
     quest options, (err, res, body) =>
       @emit("done")
-      if err? or res.statusCode > 299
-        if res.statusCode in [429, 413]
+      if err? or !res or res.statusCode > 299
+        if res?.statusCode in [429, 413]
           _handle_http_load_errors @, err
           return cb(err or new Error("status code: #{res.statusCode}"))
         console.error 'Error posting event to Sentry:', err, body
         @emit("error", err)
-        return cb(err or new Error("status code: #{res.statusCode}"))
+        return cb(err or new Error("status code: #{res?.statusCode}"))
       else
         @emit("logged")
         return cb()
