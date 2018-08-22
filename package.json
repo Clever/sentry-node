@@ -27,7 +27,7 @@
     "url": "https://github.com/Clever/sentry-node/issues"
   },
   "dependencies": {
-    "debug": "~0.7.4",
+    "debug": "~2.6.9",
     "loofah": "0.0.6",
     "quest": "~0.2.4",
     "underscore": "~1.5.2"
