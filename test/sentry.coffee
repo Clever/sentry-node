@@ -281,13 +281,10 @@ describe 'Sentry', ->
   describe 'wrapper with sentry enabled', ->
     beforeEach ->
       sinon.spy @sentry, 'error'
-      scope = nock('https://app.getsentry.com')
+      @scope = nock('https://app.getsentry.com')
         .filteringRequestBody(/.*/, '*')
         .post("/api/#{sentry_settings.project_id}/store/", '*')
         .reply(200, 'OK')
-
-    afterEach ->
-      @scope.done()
 
     it 'calls the given fn with its args and passes through the results', (done) ->
       wrapper = @sentry.wrapper 'logger'
@@ -313,6 +310,7 @@ describe 'Sentry', ->
         # The 'extra' param should have the args the function was called with
         assert.deepEqual @sentry.error.firstCall.args[3].args, expected_args
         done()
+      return
 
     it 'doesnt send to Sentry if the given function produces no error', (done) ->
       wrapper = @sentry.wrapper 'logger'
@@ -320,6 +318,7 @@ describe 'Sentry', ->
         assert.deepEqual err, null
         assert not @sentry.error.called, 'Expected sentry.error to not be called'
         done()
+      return
 
     it 'sends to Sentry if the given function produces an error and globals has value', (done) ->
       wrapper = @sentry.wrapper 'logger'
@@ -403,9 +402,6 @@ describe 'Sentry', ->
         .post("/api/#{sentry_settings.project_id}/store/", '*')
         .reply(200, 'OK')
 
-    afterEach ->
-      @scope.done()
-
     it 'sends to Sentry if the given function produces an error', (done) ->
       wrapper = @sentry.wrapper 'logger'
       expected_err = new Error 'oops'
@@ -419,6 +415,7 @@ describe 'Sentry', ->
         # The 'extra' param should have the args the function was called with
         assert.deepEqual @sentry.error.firstCall.args[3].args, expected_args
         done()
+      return
 
     it 'doesnt send to Sentry if the given function produces no error', (done) ->
       wrapper = @sentry.wrapper 'logger'
@@ -426,6 +423,7 @@ describe 'Sentry', ->
         assert.deepEqual err, null
         assert not @sentry.error.called, 'Expected sentry.error to not be called'
         done()
+      return
 
   get_mock_data = ->
     err = new Error 'Testing sentry'
