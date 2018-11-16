@@ -1,7 +1,7 @@
 _       = require 'underscore'
 os      = require 'os'
 nodeurl = require 'url'
-quest   = require 'quest'
+request = require 'request'
 util    = require 'util'
 events  = require 'events'
 scrub   = require('loofah').default()
@@ -88,7 +88,7 @@ module.exports = class Sentry extends events.EventEmitter
       headers:
         'X-Sentry-Auth': "Sentry sentry_version=4, sentry_key=#{@key}, sentry_secret=#{@secret}, sentry_client=sentry-node"
       json: data
-    quest options, (err, res, body) =>
+    request options, (err, res, body) =>
       @emit("done")
       if err? or !res or res.statusCode > 299
         if res?.statusCode in [429, 413]
