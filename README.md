@@ -1,5 +1,5 @@
 ## Sentry-node
-**Node v0.10 compatible**
+**Node v10 compatible**
 
 [![Build Status](https://travis-ci.org/Clever/sentry-node.png?branch=master)](https://travis-ci.org/Clever/sentry-node)
 
