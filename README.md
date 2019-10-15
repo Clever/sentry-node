@@ -52,7 +52,7 @@ sentry.error(
   '/sentry-node.coffee',
   "Bad arguments to sentry-node:error method",
   {
-    note: "to test sentry-node error method", 
+    note: "to test sentry-node error method",
     version: "0.1.0"
   }
 );
@@ -130,7 +130,7 @@ The Sentry client emits three events that you can listen to:
 
 - `'logged'`: emitted when an error or message is successfully logged to Sentry
 - `'error'`: emitted when an error occurs within the Sentry client and an error or message fails to be logged to Sentry
-- `'warning'`: 
+- `'warning'`:
     * emitted when a value of the incorrect type is passed as err or logger
     * emitted when a HTTP 429 (burst rate limiting) is returned from Sentry API
 
