@@ -159,3 +159,4 @@ Sentry asks for three main fields:
 * `message`: what was the exception? Always the message from the passed in error.
 * `logger`: what piece of code generated the message to Sentry? Usually just whatever application actually holds the Sentry client.
 * `extra`: what other information is needed to determine the cause of the error
+test
